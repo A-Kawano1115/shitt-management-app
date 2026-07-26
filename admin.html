@@ -45,7 +45,7 @@
 
   <header>
     <div class="header-title">勤務希望管理（管理者専用）</div>
-    <button class="btn-danger" id="btn-logout">ログアウト</button>
+    <button class="btn-danger" onclick="location.href='index.html'">ログイン画面へ</button>
   </header>
 
   <!-- メインタブ切り替え -->
@@ -58,17 +58,25 @@
   <div id="tab-shift-view">
     <div class="card">
       <div class="toolbar">
-        <div id="period-tabs" style="display:flex; gap:5px;"></div>
+        <h3>シフト希望集計</h3>
         <div>
           <button class="btn-success" id="btn-export-csv">📥 CSV出力</button>
         </div>
       </div>
-      <div id="period-display" style="font-weight:bold; margin-bottom:10px;">対象期間: 読み込み中...</div>
-
       <div class="table-container">
         <table>
-          <thead id="matrix-head"></thead>
-          <tbody id="matrix-body"></tbody>
+          <thead>
+            <tr>
+              <th>日付</th>
+              <th>職員ID</th>
+              <th>表示名</th>
+              <th>希望区分</th>
+              <th>備考</th>
+            </tr>
+          </thead>
+          <tbody id="shift-table-body">
+            <tr><td colspan="5">データ読み込み中...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -78,7 +86,7 @@
   <div id="tab-staff-view" style="display:none;">
     <div class="card">
       <div class="toolbar">
-        <h3>登録職員一覧</h3>
+        <h3 style="margin:0;">登録職員一覧</h3>
         <button class="btn-primary" id="btn-open-staff-modal">＋ 新規職員追加</button>
       </div>
 
@@ -95,7 +103,9 @@
               <th>操作</th>
             </tr>
           </thead>
-          <tbody id="staff-table-body"></tbody>
+          <tbody id="staff-table-body">
+            <tr><td colspan="7">職員データ読み込み中...</td></tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -154,11 +164,10 @@
   </div>
 
   <script type="module">
-    import { db, collection, doc, setDoc, getDocs, onSnapshot } from "./firebase-config.js";
+    import { db, collection, doc, setDoc, onSnapshot } from "./firebase-config.js";
 
     let staffList = [];
     let shiftData = {};
-    let isEditMode = false;
 
     // 画面初期化
     window.addEventListener("DOMContentLoaded", () => {
@@ -167,29 +176,29 @@
       listenShifts();
     });
 
-    // タブ切替
+    // タブ切替機能
     function setupTabs() {
       const shiftBtn = document.getElementById("tab-shift-btn");
       const staffBtn = document.getElementById("tab-staff-btn");
       const shiftView = document.getElementById("tab-shift-view");
       const staffView = document.getElementById("tab-staff-view");
 
-      shiftBtn.onclick = () => {
+      shiftBtn.addEventListener("click", () => {
         shiftBtn.classList.add("active");
         staffBtn.classList.remove("active");
         shiftView.style.display = "block";
         staffView.style.display = "none";
-      };
+      });
 
-      staffBtn.onclick = () => {
+      staffBtn.addEventListener("click", () => {
         staffBtn.classList.add("active");
         shiftBtn.classList.remove("active");
         staffView.style.display = "block";
         shiftView.style.display = "none";
-      };
+      });
     }
 
-    // 1. 職員データのリアルタイム読み込み
+    // 職員データのリアルタイム取得
     function listenStaffs() {
       onSnapshot(collection(db, "users"), (snapshot) => {
         staffList = [];
@@ -197,13 +206,20 @@
           staffList.push(docSnap.data());
         });
         renderStaffTable();
+      }, (error) => {
+        console.error("職員データの取得失敗:", error);
       });
     }
 
-    // 職員テーブル描画
+    // 職員一覧の描画
     function renderStaffTable() {
       const tbody = document.getElementById("staff-table-body");
       tbody.innerHTML = "";
+
+      if (staffList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7">登録されている職員がいません。「＋ 新規職員追加」から登録してください。</td></tr>';
+        return;
+      }
 
       staffList.forEach(s => {
         const tr = document.createElement("tr");
@@ -219,16 +235,22 @@
             </span>
           </td>
           <td>
-            <button class="btn-secondary" style="padding:3px 8px; font-size:11px;" onclick="openEditStaff('${s.staffId}')">編集</button>
+            <button class="btn-secondary btn-edit-staff" style="padding:3px 8px; font-size:11px;" data-id="${s.staffId}">編集</button>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      // 編集ボタンのイベント付与
+      document.querySelectorAll(".btn-edit-staff").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          openEditStaff(e.target.getAttribute("data-id"));
+        });
+      });
     }
 
-    // 職員追加・編集モーダル処理
+    // 新規・編集モーダルの開閉
     document.getElementById("btn-open-staff-modal").onclick = () => {
-      isEditMode = false;
       document.getElementById("staff-modal-title").innerText = "新規職員の追加";
       document.getElementById("staff-input-id").disabled = false;
       document.getElementById("staff-input-id").value = "";
@@ -238,14 +260,13 @@
       document.getElementById("staff-modal").style.display = "flex";
     };
 
-    window.openEditStaff = (staffId) => {
+    function openEditStaff(staffId) {
       const target = staffList.find(s => s.staffId === staffId);
       if (!target) return;
 
-      isEditMode = true;
       document.getElementById("staff-modal-title").innerText = "職員情報の編集";
       document.getElementById("staff-input-id").value = target.staffId;
-      document.getElementById("staff-input-id").disabled = true; // ID変更不可
+      document.getElementById("staff-input-id").disabled = true;
       document.getElementById("staff-input-name").value = target.name;
       document.getElementById("staff-input-disp").value = target.displayName;
       document.getElementById("staff-input-pass").value = target.password || "";
@@ -254,13 +275,13 @@
       document.getElementById("staff-input-status").value = target.status || "active";
 
       document.getElementById("staff-modal").style.display = "flex";
-    };
+    }
 
     document.getElementById("btn-close-staff-modal").onclick = () => {
       document.getElementById("staff-modal").style.display = "none";
     };
 
-    // 職員情報保存
+    // 職員保存
     document.getElementById("btn-save-staff").onclick = async () => {
       const staffId = document.getElementById("staff-input-id").value.trim();
       const name = document.getElementById("staff-input-name").value.trim();
@@ -292,31 +313,52 @@
       }
     };
 
-    // 2. シフトデータの読み込み
+    // シフトデータリアルタイム監視
     function listenShifts() {
       onSnapshot(collection(db, "shifts"), (snapshot) => {
         shiftData = {};
+        const tbody = document.getElementById("shift-table-body");
+        tbody.innerHTML = "";
+
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="5">シフトデータがまだありません。</td></tr>';
+          return;
+        }
+
         snapshot.forEach(docSnap => {
           const d = docSnap.data();
           shiftData[`${d.date}_${d.staffId}`] = d;
+
+          const staff = staffList.find(u => u.staffId === d.staffId);
+          const dispName = staff ? staff.displayName : d.staffId;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${d.date}</td>
+            <td>${d.staffId}</td>
+            <td>${dispName}</td>
+            <td>${d.type}</td>
+            <td>${d.memo || '-'}</td>
+          `;
+          tbody.appendChild(tr);
         });
       });
     }
 
-    // 3. CSVダウンロード機能
+    // CSVダウンロード
     document.getElementById("btn-export-csv").onclick = () => {
       if (Object.keys(shiftData).length === 0) {
         alert("出力できるシフトデータがありません。");
         return;
       }
 
-      let csv = "\uFEFF"; // BOM (Excelでの文字化け防止)
+      let csv = "\uFEFF"; // Excel用文字化け防止BOM
       csv += "日付,職員ID,表示名,希望区分,備考\n";
 
       Object.values(shiftData).forEach(s => {
         const staff = staffList.find(u => u.staffId === s.staffId);
         const dispName = staff ? staff.displayName : s.staffId;
-        const memo = (s.memo || "").replace(/"/g, '""'); // ダブルクォートのエスケープ
+        const memo = (s.memo || "").replace(/"/g, '""');
 
         csv += `"${s.date}","${s.staffId}","${dispName}","${s.type}","${memo}"\n`;
       });
