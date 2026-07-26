@@ -6,79 +6,167 @@
   <title>勤務希望入力</title>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 15px; background: #f8f9fa; }
-    .login-card { max-width: 360px; margin: 50px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .btn-danger { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #0066cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
     .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
-    .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    .btn-login { width: 100%; padding: 10px; background: #0066cc; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
-    .error-msg { color: #dc3545; font-size: 13px; text-align: center; margin-top: 10px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    
+    /* カレンダー表示 */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
+    .day-header { text-align: center; font-weight: bold; padding: 5px; background: #e9ecef; font-size: 12px; }
+    .day-cell { border: 1px solid #dee2e6; min-height: 60px; padding: 5px; background: white; border-radius: 4px; }
+    .day-num { font-weight: bold; font-size: 12px; }
+    .shift-tag { background: #e7f5ff; color: #1c7ed6; font-size: 11px; padding: 2px 4px; border-radius: 3px; margin-top: 4px; text-align: center; }
   </style>
 </head>
 <body>
 
-  <!-- ログイン画面 -->
-  <div id="login-view" class="login-card">
-    <h2 style="text-align:center; margin-top:0;">勤務希望入力</h2>
+  <!-- 1. ログイン画面 -->
+  <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
+    <h2>シフト管理 ログイン</h2>
     <div class="form-group">
-      <label>職員ID（ログインID）</label>
-      <input type="text" id="login-id" placeholder="EMP001">
+      <label>職員ID</label>
+      <input type="text" id="login-id" placeholder="例: EMP001">
     </div>
     <div class="form-group">
       <label>パスワード</label>
-      <input type="password" id="login-pass" placeholder="••••••••">
+      <input type="password" id="login-pass" placeholder="パスワード">
     </div>
-    <button class="btn-login" id="btn-login">ログイン</button>
-    <div id="login-error" class="error-msg"></div>
+    <button class="btn-primary" id="btn-login">ログイン</button>
   </div>
 
-  <!-- メイン画面（ログイン後表示） -->
-  <div id="app-view" style="display:none;">
-    <header style="display:flex; justify-content:space-between; align-items:center; background:#0066cc; color:white; padding:10px 15px; border-radius:8px;">
-      <span id="user-display" style="font-weight:bold;">---</span>
-      <button onclick="location.reload()" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">ログアウト</button>
-    </header>
-    <p style="text-align:center; margin-top:20px;">カレンダー画面呼び出し中...</p>
+  <!-- 2. カレンダー・メイン画面 -->
+  <div id="main-view" style="display: none;">
+    <div class="card header">
+      <div>
+        <h3 style="margin:0;" id="user-display">ようこそ</h3>
+        <small id="user-role-text"></small>
+      </div>
+      <button class="btn-danger" id="btn-logout">ログアウト</button>
+    </div>
+
+    <div class="card">
+      <h3>📅 勤務希望入力</h3>
+      <p style="font-size: 13px; color: #666;">※日付を選択して希望を出します。</p>
+      <div class="calendar-grid" id="calendar">
+        <!-- JSで動的生成 -->
+      </div>
+    </div>
   </div>
 
   <script type="module">
-    import { db, doc, getDoc } from "./firebase-config.js";
+    import { db, doc, getDoc, collection, onSnapshot, setDoc } from "./firebase-config.js";
 
+    let currentUser = null;
+
+    // ログイン処理
     document.getElementById("btn-login").onclick = async () => {
-      const id = document.getElementById("login-id").value.trim();
-      const pass = document.getElementById("login-pass").value.trim();
-      const err = document.getElementById("login-error");
-      err.innerText = "";
+      const staffId = document.getElementById("login-id").value.trim();
+      const password = document.getElementById("login-pass").value.trim();
 
-      if (!id || !pass) {
-        err.innerText = "IDとパスワードを入力してください。";
+      if (!staffId || !password) {
+        alert("職員IDとパスワードを入力してください。");
         return;
       }
 
       try {
-        const userDoc = await getDoc(doc(db, "users", id));
+        const userDoc = await getDoc(doc(db, "users", staffId));
         if (!userDoc.exists()) {
-          err.innerText = "ログインIDが存在しません。";
+          alert("該当する職員IDが見つかりません。");
           return;
         }
 
-        const user = userDoc.data();
-        if (user.password !== pass) {
-          err.innerText = "パスワードが正しくありません。";
+        const userData = userDoc.data();
+        if (userData.password !== password) {
+          alert("パスワードが違います。");
           return;
         }
 
-        if (user.status !== "active") {
-          err.innerText = "このアカウントは現在無効化されています。管理者へご連絡ください。";
+        if (userData.status === "disabled") {
+          alert("このアカウントは無効化されています。管理者にお問い合わせください。");
           return;
         }
 
         // ログイン成功
-        document.getElementById("login-view").style.display = "none";
-        document.getElementById("app-view").style.display = "block";
-        document.getElementById("user-display").innerText = `${user.displayName} 様 (${user.employmentType})`;
+        currentUser = userData;
+        showMainView();
 
       } catch (e) {
-        err.innerText = "認証エラー: " + e.message;
+        alert("ログインエラー: " + e.message);
+      }
+    };
+
+    // メイン画面（カレンダー）表示
+    function showMainView() {
+      document.getElementById("login-view").style.display = "none";
+      document.getElementById("main-view").style.display = "block";
+      document.getElementById("user-display").innerText = `ようこそ ${currentUser.displayName} 様`;
+      document.getElementById("user-role-text").innerText = `権限: ${currentUser.role === 'admin' ? '管理者' : '一般職員'}`;
+
+      renderCalendar();
+    }
+
+    // ログアウト処理
+    document.getElementById("btn-logout").onclick = () => {
+      currentUser = null;
+      document.getElementById("main-view").style.display = "none";
+      document.getElementById("login-view").style.display = "block";
+      document.getElementById("login-id").value = "";
+      document.getElementById("login-pass").value = "";
+    };
+
+    // カレンダーの描画（当月分）
+    function renderCalendar() {
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+
+      const days = ["日", "月", "火", "水", "木", "金", "土"];
+      days.forEach(d => {
+        const h = document.createElement("div");
+        h.className = "day-header";
+        h.innerText = d;
+        calendar.appendChild(h);
+      });
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+
+      const lastDay = new Date(year, month + 1, 0).getDate();
+
+      for (let day = 1; day <= lastDay; day++) {
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        cell.innerHTML = `
+          <div class="day-num">${day}</div>
+          <button style="margin-top:5px; font-size:10px;" onclick="window.submitShift('${dateStr}')">希望入力</button>
+        `;
+        calendar.appendChild(cell);
+      }
+    }
+
+    // 希望入力の簡易処理
+    window.submitShift = async (dateStr) => {
+      const type = prompt(`${dateStr} の希望を入力してください（例: 希望休, 日勤, 夜勤）`);
+      if (!type) return;
+
+      try {
+        await setDoc(doc(db, "shifts", `${dateStr}_${currentUser.staffId}`), {
+          date: dateStr,
+          staffId: currentUser.staffId,
+          type: type,
+          updatedAt: new Date()
+        }, { merge: true });
+
+        alert("希望を保存しました！");
+      } catch (e) {
+        alert("保存エラー: " + e.message);
       }
     };
   </script>
