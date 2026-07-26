@@ -3,56 +3,278 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>勤務希望入力</title>
+  <title>勤務希望入力システム</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 15px; background: #f8f9fa; }
-    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .header { display: flex; justify-content: space-between; align-items: center; }
-    .btn-danger { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-    .btn-primary { background: #0066cc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    
+    :root {
+      --primary: #2b6cb0;
+      --primary-hover: #2c5282;
+      --bg-color: #f7fafc;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --border-color: #e2e8f0;
+      --sat-color: #3182ce;
+      --sun-color: #e53e3e;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 12px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      margin-bottom: 16px;
+    }
+
+    /* ログイン画面 */
+    .login-box {
+      max-width: 380px;
+      margin: 40px auto;
+    }
+    .login-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+
+    /* ヘッダー */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .user-info {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .user-role {
+      font-size: 0.8rem;
+      color: #718096;
+      display: block;
+    }
+
+    /* ボタン共通 */
+    .btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: white; width: 100%; padding: 12px; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: #e53e3e; color: white; }
+    .btn-secondary { background: #718096; color: white; }
+
+    /* 期間選択セレクト */
+    .period-selector {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .period-selector select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 1rem;
+      font-weight: bold;
+      background: white;
+    }
+
     /* カレンダー表示 */
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
-    .day-header { text-align: center; font-weight: bold; padding: 5px; background: #e9ecef; font-size: 12px; }
-    .day-cell { border: 1px solid #dee2e6; min-height: 60px; padding: 5px; background: white; border-radius: 4px; }
-    .day-num { font-weight: bold; font-size: 12px; }
-    .shift-tag { background: #e7f5ff; color: #1c7ed6; font-size: 11px; padding: 2px 4px; border-radius: 3px; margin-top: 4px; text-align: center; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .day-header {
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 6px 0;
+      background: #edf2f7;
+      border-radius: 4px;
+    }
+    .day-header.sat { color: var(--sat-color); }
+    .day-header.sun { color: var(--sun-color); }
+
+    .day-cell {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px;
+      min-height: 75px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .day-cell:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+    }
+    .day-cell.sat .day-num { color: var(--sat-color); }
+    .day-cell.sun .day-num { color: var(--sun-color); }
+    .day-num {
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    .shift-tag {
+      font-size: 0.75rem;
+      padding: 4px 2px;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .shift-休み { background: #fed7d7; color: #9b2c2c; }
+    .shift-希望休 { background: #feebc8; color: #9c4221; }
+    .shift-日勤 { background: #ebf8ff; color: #2b6cb0; }
+    .shift-夜勤 { background: #e9d8fd; color: #553c9a; }
+    .shift-早番 { background: #e6fffa; color: #234e52; }
+    .shift-遅番 { background: #fefcbf; color: #744210; }
+    .shift-none { color: #a0aec0; font-size: 0.7rem; text-align: center; }
+
+    /* モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .shift-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .shift-opt-btn {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: white;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .shift-opt-btn:hover {
+      border-color: var(--primary);
+      background: #ebf8ff;
+    }
   </style>
 </head>
 <body>
 
-  <!-- 1. ログイン画面 -->
-  <div id="login-view" class="card" style="max-width: 400px; margin: 40px auto;">
-    <h2>シフト管理 ログイン</h2>
-    <div class="form-group">
-      <label>職員ID</label>
-      <input type="text" id="login-id" placeholder="例: EMP001">
+  <div class="container">
+    <!-- 1. ログイン画面 -->
+    <div id="login-view" class="card login-box">
+      <div class="login-title">勤務希望入力システム</div>
+      <div class="form-group">
+        <label>職員ID</label>
+        <input type="text" id="login-id" placeholder="例: EMP001">
+      </div>
+      <div class="form-group">
+        <label>パスワード</label>
+        <input type="password" id="login-pass" placeholder="パスワード">
+      </div>
+      <button class="btn btn-primary" id="btn-login">ログイン</button>
     </div>
-    <div class="form-group">
-      <label>パスワード</label>
-      <input type="password" id="login-pass" placeholder="パスワード">
+
+    <!-- 2. メイン画面 -->
+    <div id="main-view" style="display: none;">
+      <div class="card">
+        <div class="header">
+          <div>
+            <span class="user-info" id="user-display">ようこそ</span>
+            <span class="user-role" id="user-role-text"></span>
+          </div>
+          <button class="btn btn-danger" id="btn-logout">ログアウト</button>
+        </div>
+
+        <div class="period-selector">
+          <label style="font-weight: bold;">対象期間:</label>
+          <select id="period-select"></select>
+        </div>
+
+        <div class="calendar-grid" id="calendar"></div>
+      </div>
     </div>
-    <button class="btn-primary" id="btn-login">ログイン</button>
   </div>
 
-  <!-- 2. カレンダー・メイン画面 -->
-  <div id="main-view" style="display: none;">
-    <div class="card header">
-      <div>
-        <h3 style="margin:0;" id="user-display">ようこそ</h3>
-        <small id="user-role-text"></small>
+  <!-- シフト選択モーダル -->
+  <div id="shift-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title" id="modal-date-title">日付の希望選択</div>
+      <div class="shift-options">
+        <button class="shift-opt-btn" onclick="saveShift('希望休')">希望休</button>
+        <button class="shift-opt-btn" onclick="saveShift('日勤')">日勤</button>
+        <button class="shift-opt-btn" onclick="saveShift('早番')">早番</button>
+        <button class="shift-opt-btn" onclick="saveShift('遅番')">遅番</button>
+        <button class="shift-opt-btn" onclick="saveShift('夜勤')">夜勤</button>
+        <button class="shift-opt-btn" style="color:#e53e3e;" onclick="saveShift('')">クリア</button>
       </div>
-      <button class="btn-danger" id="btn-logout">ログアウト</button>
-    </div>
-
-    <div class="card">
-      <h3>📅 勤務希望入力</h3>
-      <p style="font-size: 13px; color: #666;">※日付を選択して希望を出します。</p>
-      <div class="calendar-grid" id="calendar">
-        <!-- JSで動的生成 -->
+      <div class="form-group">
+        <label>備考（任意）</label>
+        <input type="text" id="modal-memo" placeholder="例: 有休希望、午前のみ等">
+      </div>
+      <div style="display:flex; justify-content:flex-end;">
+        <button class="btn btn-secondary" id="btn-close-modal">キャンセル</button>
       </div>
     </div>
   </div>
@@ -61,6 +283,45 @@
     import { db, doc, getDoc, collection, onSnapshot, setDoc } from "./firebase-config.js";
 
     let currentUser = null;
+    let myShifts = {};
+    let selectedDateStr = "";
+    let periods = [];
+
+    // 16日〜翌月15日の期間リストを生成 (前月, 当月, 翌月, 翌々月)
+    function generatePeriods() {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth(); // 0-indexed
+
+      periods = [];
+      for (let i = -1; i <= 2; i++) {
+        const start = new Date(currentYear, currentMonth + i, 16);
+        const end = new Date(currentYear, currentMonth + i + 1, 15);
+        
+        const sy = start.getFullYear();
+        const sm = String(start.getMonth() + 1).padStart(2, '0');
+        const ey = end.getFullYear();
+        const em = String(end.getMonth() + 1).padStart(2, '0');
+
+        periods.push({
+          label: `${sy}/${sm}/16 〜 ${ey}/${em}/15`,
+          start: start,
+          end: end
+        });
+      }
+
+      const select = document.getElementById("period-select");
+      select.innerHTML = "";
+      periods.forEach((p, index) => {
+        const opt = document.createElement("option");
+        opt.value = index;
+        opt.innerText = p.label;
+        if (index === 1) opt.selected = true; // デフォルトは当月期
+        select.appendChild(opt);
+      });
+
+      select.onchange = () => renderCalendar();
+    }
 
     // ログイン処理
     document.getElementById("btn-login").onclick = async () => {
@@ -81,16 +342,15 @@
 
         const userData = userDoc.data();
         if (userData.password !== password) {
-          alert("パスワードが違います。");
+          alert("パスワードが間違っています。");
           return;
         }
 
         if (userData.status === "disabled") {
-          alert("このアカウントは無効化されています。管理者にお問い合わせください。");
+          alert("このアカウントは無効化されています。");
           return;
         }
 
-        // ログイン成功
         currentUser = userData;
         showMainView();
 
@@ -99,72 +359,119 @@
       }
     };
 
-    // メイン画面（カレンダー）表示
     function showMainView() {
       document.getElementById("login-view").style.display = "none";
       document.getElementById("main-view").style.display = "block";
-      document.getElementById("user-display").innerText = `ようこそ ${currentUser.displayName} 様`;
-      document.getElementById("user-role-text").innerText = `権限: ${currentUser.role === 'admin' ? '管理者' : '一般職員'}`;
+      document.getElementById("user-display").innerText = `${currentUser.displayName} 様`;
+      document.getElementById("user-role-text").innerText = `(権限: ${currentUser.role === 'admin' ? '管理者' : '一般職員'})`;
 
-      renderCalendar();
+      generatePeriods();
+      listenMyShifts();
     }
 
-    // ログアウト処理
     document.getElementById("btn-logout").onclick = () => {
       currentUser = null;
       document.getElementById("main-view").style.display = "none";
       document.getElementById("login-view").style.display = "block";
-      document.getElementById("login-id").value = "";
-      document.getElementById("login-pass").value = "";
     };
 
-    // カレンダーの描画（当月分）
+    // 自分のシフト希望を監視
+    function listenMyShifts() {
+      onSnapshot(collection(db, "shifts"), (snapshot) => {
+        myShifts = {};
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if (d.staffId === currentUser.staffId) {
+            myShifts[d.date] = d;
+          }
+        });
+        renderCalendar();
+      });
+    }
+
+    // カレンダー描画（16日〜15日対応）
     function renderCalendar() {
       const calendar = document.getElementById("calendar");
       calendar.innerHTML = "";
 
-      const days = ["日", "月", "火", "水", "木", "金", "土"];
-      days.forEach(d => {
+      // 曜日ヘッダー
+      const dayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+      dayLabels.forEach((d, idx) => {
         const h = document.createElement("div");
-        h.className = "day-header";
+        h.className = `day-header ${idx === 0 ? 'sun' : idx === 6 ? 'sat' : ''}`;
         h.innerText = d;
         calendar.appendChild(h);
       });
 
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
+      const selectedPeriodIdx = document.getElementById("period-select").value || 1;
+      const period = periods[selectedPeriodIdx];
+      if (!period) return;
 
-      const lastDay = new Date(year, month + 1, 0).getDate();
+      const curr = new Date(period.start);
+      const end = new Date(period.end);
 
-      for (let day = 1; day <= lastDay; day++) {
+      // 月初の空枠埋め
+      const firstDayOfWeek = curr.getDay();
+      for (let i = 0; i < firstDayOfWeek; i++) {
+        const emptyCell = document.createElement("div");
+        emptyCell.style.background = "#f7fafc";
+        emptyCell.style.border = "none";
+        calendar.appendChild(emptyCell);
+      }
+
+      // 日付セルの生成
+      while (curr <= end) {
+        const year = curr.getFullYear();
+        const month = String(curr.getMonth() + 1).padStart(2, '0');
+        const day = String(curr.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+        const dayOfWeek = curr.getDay();
+
         const cell = document.createElement("div");
-        cell.className = "day-cell";
+        cell.className = `day-cell ${dayOfWeek === 0 ? 'sun' : dayOfWeek === 6 ? 'sat' : ''}`;
         
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        
+        const shiftData = myShifts[dateStr];
+        const shiftType = shiftData ? shiftData.type : "";
+
         cell.innerHTML = `
-          <div class="day-num">${day}</div>
-          <button style="margin-top:5px; font-size:10px;" onclick="window.submitShift('${dateStr}')">希望入力</button>
+          <div class="day-num">${curr.getMonth() + 1}/${curr.getDate()} (${dayLabels[dayOfWeek]})</div>
+          <div class="shift-tag ${shiftType ? 'shift-' + shiftType : 'shift-none'}">
+            ${shiftType || '未入力'}
+          </div>
         `;
+
+        cell.onclick = () => openShiftModal(dateStr, shiftData);
         calendar.appendChild(cell);
+
+        curr.setDate(curr.getDate() + 1);
       }
     }
 
-    // 希望入力の簡易処理
-    window.submitShift = async (dateStr) => {
-      const type = prompt(`${dateStr} の希望を入力してください（例: 希望休, 日勤, 夜勤）`);
-      if (!type) return;
+    // モーダル処理
+    function openShiftModal(dateStr, existingData) {
+      selectedDateStr = dateStr;
+      document.getElementById("modal-date-title").innerText = `${dateStr} の希望選択`;
+      document.getElementById("modal-memo").value = existingData ? (existingData.memo || "") : "";
+      document.getElementById("shift-modal").style.display = "flex";
+    }
+
+    document.getElementById("btn-close-modal").onclick = () => {
+      document.getElementById("shift-modal").style.display = "none";
+    };
+
+    window.saveShift = async (type) => {
+      const memo = document.getElementById("modal-memo").value.trim();
 
       try {
-        await setDoc(doc(db, "shifts", `${dateStr}_${currentUser.staffId}`), {
-          date: dateStr,
+        await setDoc(doc(db, "shifts", `${selectedDateStr}_${currentUser.staffId}`), {
+          date: selectedDateStr,
           staffId: currentUser.staffId,
           type: type,
+          memo: memo,
           updatedAt: new Date()
         }, { merge: true });
 
-        alert("希望を保存しました！");
+        document.getElementById("shift-modal").style.display = "none";
       } catch (e) {
         alert("保存エラー: " + e.message);
       }
