@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>勤務希望入力</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 15px; background: #f8f9fa; }
+    .login-card { max-width: 360px; margin: 50px auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+    .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .btn-login { width: 100%; padding: 10px; background: #0066cc; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    .error-msg { color: #dc3545; font-size: 13px; text-align: center; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- ログイン画面 -->
+  <div id="login-view" class="login-card">
+    <h2 style="text-align:center; margin-top:0;">勤務希望入力</h2>
+    <div class="form-group">
+      <label>職員ID（ログインID）</label>
+      <input type="text" id="login-id" placeholder="EMP001">
+    </div>
+    <div class="form-group">
+      <label>パスワード</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="btn-login" id="btn-login">ログイン</button>
+    <div id="login-error" class="error-msg"></div>
+  </div>
+
+  <!-- メイン画面（ログイン後表示） -->
+  <div id="app-view" style="display:none;">
+    <header style="display:flex; justify-content:space-between; align-items:center; background:#0066cc; color:white; padding:10px 15px; border-radius:8px;">
+      <span id="user-display" style="font-weight:bold;">---</span>
+      <button onclick="location.reload()" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">ログアウト</button>
+    </header>
+    <p style="text-align:center; margin-top:20px;">カレンダー画面呼び出し中...</p>
+  </div>
+
+  <script type="module">
+    import { db, doc, getDoc } from "./firebase-config.js";
+
+    document.getElementById("btn-login").onclick = async () => {
+      const id = document.getElementById("login-id").value.trim();
+      const pass = document.getElementById("login-pass").value.trim();
+      const err = document.getElementById("login-error");
+      err.innerText = "";
+
+      if (!id || !pass) {
+        err.innerText = "IDとパスワードを入力してください。";
+        return;
+      }
+
+      try {
+        const userDoc = await getDoc(doc(db, "users", id));
+        if (!userDoc.exists()) {
+          err.innerText = "ログインIDが存在しません。";
+          return;
+        }
+
+        const user = userDoc.data();
+        if (user.password !== pass) {
+          err.innerText = "パスワードが正しくありません。";
+          return;
+        }
+
+        if (user.status !== "active") {
+          err.innerText = "このアカウントは現在無効化されています。管理者へご連絡ください。";
+          return;
+        }
+
+        // ログイン成功
+        document.getElementById("login-view").style.display = "none";
+        document.getElementById("app-view").style.display = "block";
+        document.getElementById("user-display").innerText = `${user.displayName} 様 (${user.employmentType})`;
+
+      } catch (e) {
+        err.innerText = "認証エラー: " + e.message;
+      }
+    };
+  </script>
+</body>
+</html>
