@@ -3,371 +3,305 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>勤務希望管理 - 管理者画面</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title>勤務希望管理 - 職員・システム管理</title>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 15px; background: #f8f9fa; }
-    header { display: flex; justify-content: space-between; align-items: center; background: #343a40; color: white; padding: 10px 20px; border-radius: 8px; margin-bottom: 15px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      padding: 15px;
+      background-color: #f8f9fa;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1e293b;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
     .header-title { font-size: 18px; font-weight: bold; }
-
-    /* メインタブ */
-    .nav-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #dee2e6; }
-    .nav-tab { padding: 10px 20px; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 15px; color: #6c757d; }
-    .nav-tab.active { color: #0066cc; border-bottom: 3px solid #0066cc; }
-
-    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-
-    .btn-primary { background: #0066cc; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-success { background: #28a745; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; }
-    .btn-danger { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-
-    /* テーブル共通 */
-    .table-container { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 4px; }
-    table { border-collapse: collapse; width: 100%; white-space: nowrap; font-size: 13px; }
-    th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
-    th { background: #f1f3f5; }
-
-    /* モーダル */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 450px; }
-    .form-group { margin-bottom: 12px; text-align: left; }
-    .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 13px; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-
-    .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-    .status-active { background: #e6fcf5; color: #0ca678; }
-    .status-disabled { background: #fff5f5; color: #f03e3e; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .btn-nav {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .btn-logout {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #0f172a;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+    .form-control {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+    .btn-submit {
+      width: 100%;
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-submit:hover { background: #059669; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 10px;
+      text-align: left;
+    }
+    th { background: #f1f5f9; font-weight: bold; }
+    .role-badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .role-admin { background: #dbeafe; color: #1e40af; }
+    .role-staff { background: #f3f4f6; color: #374151; }
+    .btn-del-sm {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-title">勤務希望管理（管理者専用）</div>
-    <button class="btn-danger" onclick="location.href='index.html'">ログイン画面へ</button>
+    <div class="header-title">勤務希望管理システム【管理者専用】</div>
+    <div class="header-actions">
+      <a href="app.html" class="btn-nav">カレンダー画面へ</a>
+      <button id="btn-logout" class="btn-logout">ログアウト</button>
+    </div>
   </header>
 
-  <!-- メインタブ切り替え -->
-  <div class="nav-tabs">
-    <button class="nav-tab active" id="tab-shift-btn">📅 シフト集計・マトリックス</button>
-    <button class="nav-tab" id="tab-staff-btn">👥 職員管理</button>
-  </div>
-
-  <!-- タブ1: シフト集計 -->
-  <div id="tab-shift-view">
+  <div class="container">
+    <!-- 職員追加フォーム -->
     <div class="card">
-      <div class="toolbar">
-        <h3>シフト希望集計</h3>
-        <div>
-          <button class="btn-success" id="btn-export-csv">📥 CSV出力</button>
+      <div class="card-title">新規職員アカウント作成</div>
+      <form id="add-staff-form">
+        <div class="form-group">
+          <label for="staff-id">スタッフID (例: 1002)</label>
+          <input type="text" id="staff-id" class="form-control" required placeholder="半角英数字">
         </div>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>日付</th>
-              <th>職員ID</th>
-              <th>表示名</th>
-              <th>希望区分</th>
-              <th>備考</th>
-            </tr>
-          </thead>
-          <tbody id="shift-table-body">
-            <tr><td colspan="5">データ読み込み中...</td></tr>
-          </tbody>
-        </table>
-      </div>
+        <div class="form-group">
+          <label for="staff-name">氏名 (例: 山田 太郎)</label>
+          <input type="text" id="staff-name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="password">初期パスワード</label>
+          <input type="password" id="password" class="form-control" required minlength="6" placeholder="6文字以上">
+        </div>
+        <div class="form-group">
+          <label for="role">権限</label>
+          <select id="role" class="form-control">
+            <option value="staff">一般スタッフ</option>
+            <option value="admin">管理者</option>
+          </select>
+        </div>
+        <button type="submit" id="btn-create" class="btn-submit">登録実行</button>
+      </form>
     </div>
-  </div>
 
-  <!-- タブ2: 職員管理 -->
-  <div id="tab-staff-view" style="display:none;">
+    <!-- 職員一覧表示 -->
     <div class="card">
-      <div class="toolbar">
-        <h3 style="margin:0;">登録職員一覧</h3>
-        <button class="btn-primary" id="btn-open-staff-modal">＋ 新規職員追加</button>
-      </div>
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>職員ID（ログインID）</th>
-              <th>氏名</th>
-              <th>表示名</th>
-              <th>権限</th>
-              <th>雇用形態</th>
-              <th>アカウント状態</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="staff-table-body">
-            <tr><td colspan="7">職員データ読み込み中...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- 職員登録・編集モーダル -->
-  <div id="staff-modal" class="modal">
-    <div class="modal-content">
-      <h3 id="staff-modal-title" style="margin-top:0;">職員情報の登録</h3>
-      
-      <div class="form-group">
-        <label>職員ID（ログインID）*</label>
-        <input type="text" id="staff-input-id" placeholder="例: EMP001">
-      </div>
-      <div class="form-group">
-        <label>氏名 *</label>
-        <input type="text" id="staff-input-name" placeholder="例: 山田 太郎">
-      </div>
-      <div class="form-group">
-        <label>表示名 *</label>
-        <input type="text" id="staff-input-disp" placeholder="例: 山田">
-      </div>
-      <div class="form-group">
-        <label>初期パスワード *</label>
-        <input type="password" id="staff-input-pass" placeholder="ログイン用パスワード">
-      </div>
-      <div class="form-group">
-        <label>権限</label>
-        <select id="staff-input-role">
-          <option value="staff">一般職員 (staff)</option>
-          <option value="admin">管理者 (admin)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>雇用形態</label>
-        <select id="staff-input-emp">
-          <option value="常勤">常勤</option>
-          <option value="パート">パート</option>
-          <option value="夜勤専従">夜勤専従</option>
-          <option value="その他">その他</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>アカウント状態</label>
-        <select id="staff-input-status">
-          <option value="active">有効</option>
-          <option value="disabled">無効（ログイン不可）</option>
-        </select>
-      </div>
-
-      <div class="modal-actions">
-        <button class="btn-secondary" id="btn-close-staff-modal">キャンセル</button>
-        <button class="btn-primary" id="btn-save-staff">保存する</button>
-      </div>
+      <div class="card-title">登録済み職員一覧</div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>氏名</th>
+            <th>権限</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="staff-table-body">
+          <tr><td colspan="4">読み込み中...</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
   <script type="module">
-    import { db, collection, doc, setDoc, onSnapshot } from "./firebase-config.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    let staffList = [];
-    let shiftData = {};
-
-    // 画面初期化
-    window.addEventListener("DOMContentLoaded", () => {
-      setupTabs();
-      listenStaffs();
-      listenShifts();
-    });
-
-    // タブ切替機能
-    function setupTabs() {
-      const shiftBtn = document.getElementById("tab-shift-btn");
-      const staffBtn = document.getElementById("tab-staff-btn");
-      const shiftView = document.getElementById("tab-shift-view");
-      const staffView = document.getElementById("tab-staff-view");
-
-      shiftBtn.addEventListener("click", () => {
-        shiftBtn.classList.add("active");
-        staffBtn.classList.remove("active");
-        shiftView.style.display = "block";
-        staffView.style.display = "none";
-      });
-
-      staffBtn.addEventListener("click", () => {
-        staffBtn.classList.add("active");
-        shiftBtn.classList.remove("active");
-        staffView.style.display = "block";
-        shiftView.style.display = "none";
-      });
-    }
-
-    // 職員データのリアルタイム取得
-    function listenStaffs() {
-      onSnapshot(collection(db, "users"), (snapshot) => {
-        staffList = [];
-        snapshot.forEach(docSnap => {
-          staffList.push(docSnap.data());
-        });
-        renderStaffTable();
-      }, (error) => {
-        console.error("職員データの取得失敗:", error);
-      });
-    }
-
-    // 職員一覧の描画
-    function renderStaffTable() {
-      const tbody = document.getElementById("staff-table-body");
-      tbody.innerHTML = "";
-
-      if (staffList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">登録されている職員がいません。「＋ 新規職員追加」から登録してください。</td></tr>';
-        return;
-      }
-
-      staffList.forEach(s => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><strong>${s.staffId}</strong></td>
-          <td>${s.name}</td>
-          <td>${s.displayName}</td>
-          <td>${s.role === 'admin' ? '管理者' : '一般'}</td>
-          <td>${s.employmentType || '-'}</td>
-          <td>
-            <span class="status-badge ${s.status === 'active' ? 'status-active' : 'status-disabled'}">
-              ${s.status === 'active' ? '有効' : '無効'}
-            </span>
-          </td>
-          <td>
-            <button class="btn-secondary btn-edit-staff" style="padding:3px 8px; font-size:11px;" data-id="${s.staffId}">編集</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // 編集ボタンのイベント付与
-      document.querySelectorAll(".btn-edit-staff").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          openEditStaff(e.target.getAttribute("data-id"));
-        });
-      });
-    }
-
-    // 新規・編集モーダルの開閉
-    document.getElementById("btn-open-staff-modal").onclick = () => {
-      document.getElementById("staff-modal-title").innerText = "新規職員の追加";
-      document.getElementById("staff-input-id").disabled = false;
-      document.getElementById("staff-input-id").value = "";
-      document.getElementById("staff-input-name").value = "";
-      document.getElementById("staff-input-disp").value = "";
-      document.getElementById("staff-input-pass").value = "";
-      document.getElementById("staff-modal").style.display = "flex";
+    // ↓↓↓ ここにapp.htmlと同じfirebaseConfigを貼り付けてください ↓↓↓
+    const firebaseConfig = {
+      apiKey: "AIzaSyBRC4LFi5zqFTtDZtrsAEFSs99F1nlnPYA",
+      authDomain: "shift-app-2026-ddb1a.firebaseapp.com",
+      projectId: "shift-app-2026-ddb1a",
+      storageBucket: "shift-app-2026-ddb1a.firebasestorage.app",
+      messagingSenderId: "645356176933",
+      appId: "1:645356176933:web:2a01952e35d9382d4961cc"
     };
+    // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-    function openEditStaff(staffId) {
-      const target = staffList.find(s => s.staffId === staffId);
-      if (!target) return;
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-      document.getElementById("staff-modal-title").innerText = "職員情報の編集";
-      document.getElementById("staff-input-id").value = target.staffId;
-      document.getElementById("staff-input-id").disabled = true;
-      document.getElementById("staff-input-name").value = target.name;
-      document.getElementById("staff-input-disp").value = target.displayName;
-      document.getElementById("staff-input-pass").value = target.password || "";
-      document.getElementById("staff-input-role").value = target.role;
-      document.getElementById("staff-input-emp").value = target.employmentType || "常勤";
-      document.getElementById("staff-input-status").value = target.status || "active";
+    let currentUserId = "";
 
-      document.getElementById("staff-modal").style.display = "flex";
-    }
-
-    document.getElementById("btn-close-staff-modal").onclick = () => {
-      document.getElementById("staff-modal").style.display = "none";
-    };
-
-    // 職員保存
-    document.getElementById("btn-save-staff").onclick = async () => {
-      const staffId = document.getElementById("staff-input-id").value.trim();
-      const name = document.getElementById("staff-input-name").value.trim();
-      const displayName = document.getElementById("staff-input-disp").value.trim();
-      const password = document.getElementById("staff-input-pass").value.trim();
-
-      if (!staffId || !name || !displayName || !password) {
-        alert("必須項目（職員ID、氏名、表示名、パスワード）を入力してください。");
-        return;
-      }
-
-      const userData = {
-        staffId: staffId,
-        name: name,
-        displayName: displayName,
-        password: password,
-        role: document.getElementById("staff-input-role").value,
-        employmentType: document.getElementById("staff-input-emp").value,
-        status: document.getElementById("staff-input-status").value,
-        updatedAt: new Date()
-      };
-
-      try {
-        await setDoc(doc(db, "users", staffId), userData, { merge: true });
-        document.getElementById("staff-modal").style.display = "none";
-        alert("職員情報を保存しました！");
-      } catch (e) {
-        alert("保存エラー: " + e.message);
-      }
-    };
-
-    // シフトデータリアルタイム監視
-    function listenShifts() {
-      onSnapshot(collection(db, "shifts"), (snapshot) => {
-        shiftData = {};
-        const tbody = document.getElementById("shift-table-body");
-        tbody.innerHTML = "";
-
-        if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="5">シフトデータがまだありません。</td></tr>';
+    // 認証状態の監視
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUserId = user.email.replace("@shift.local", "");
+        
+        // 管理者権限チェック
+        const userDoc = await getDoc(doc(db, "users", currentUserId));
+        if (!userDoc.exists() || userDoc.data().role !== "admin") {
+          alert("管理者権限がありません。カレンダー画面に移動します。");
+          window.location.href = "app.html";
           return;
         }
 
-        snapshot.forEach(docSnap => {
-          const d = docSnap.data();
-          shiftData[`${d.date}_${d.staffId}`] = d;
+        // 職員一覧をリアルタイム読み込み
+        listenStaffList();
+      } else {
+        window.location.href = "index.html";
+      }
+    });
 
-          const staff = staffList.find(u => u.staffId === d.staffId);
-          const dispName = staff ? staff.displayName : d.staffId;
+    // ログアウト処理
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      signOut(auth).then(() => { window.location.href = "index.html"; });
+    });
 
+    // 職員追加処理
+    document.getElementById("add-staff-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const staffId = document.getElementById("staff-id").value.trim();
+      const name = document.getElementById("staff-name").value.trim();
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const btn = document.getElementById("btn-create");
+
+      btn.disabled = true;
+      btn.textContent = "登録中...";
+
+      try {
+        // 管理者セッションを維持するため、一時的なFirebaseアプリを立ち上げてアカウント作成
+        const tempApp = initializeApp(firebaseConfig, "SecondaryApp");
+        const tempAuth = getAuth(tempApp);
+        
+        const email = `${staffId}@shift.local`;
+        const cred = await createUserWithEmailAndPassword(tempAuth, email, password);
+
+        // Firestore の users コレクションに保存
+        await setDoc(doc(db, "users", staffId), {
+          uid: cred.user.uid,
+          staffId: staffId,
+          name: name,
+          role: role,
+          createdAt: new Date()
+        });
+
+        alert(`職員「${name} (${staffId})」を登録しました！`);
+        document.getElementById("add-staff-form").reset();
+      } catch (error) {
+        console.error("登録エラー:", error);
+        alert("登録に失敗しました: " + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登録実行";
+      }
+    });
+
+    // 職員一覧のリアルタイム表示
+    function listenStaffList() {
+      onSnapshot(collection(db, "users"), (snapshot) => {
+        const tbody = document.getElementById("staff-table-body");
+        tbody.innerHTML = "";
+
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="4">登録されている職員はいません</td></tr>';
+          return;
+        }
+
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
           const tr = document.createElement("tr");
+
+          const roleClass = data.role === "admin" ? "role-admin" : "role-staff";
+          const roleLabel = data.role === "admin" ? "管理者" : "一般";
+
           tr.innerHTML = `
-            <td>${d.date}</td>
-            <td>${d.staffId}</td>
-            <td>${dispName}</td>
-            <td>${d.type}</td>
-            <td>${d.memo || '-'}</td>
+            <td><strong>${data.staffId}</strong></td>
+            <td>${data.name || "-"}</td>
+            <td><span class="role-badge ${roleClass}">${roleLabel}</span></td>
+            <td>
+              <button class="btn-del-sm" onclick="deleteStaff('${data.staffId}')">削除</button>
+            </td>
           `;
           tbody.appendChild(tr);
         });
       });
     }
 
-    // CSVダウンロード
-    document.getElementById("btn-export-csv").onclick = () => {
-      if (Object.keys(shiftData).length === 0) {
-        alert("出力できるシフトデータがありません。");
-        return;
+    // 職員削除処理
+    window.deleteStaff = async function(staffId) {
+      if (!confirm(`スタッフID: ${staffId} の登録情報をFirestoreから削除しますか？\n(※注意: Authenticationのアカウント削除は別途Firebaseコンソールで行う必要があります)`)) return;
+
+      try {
+        await deleteDoc(doc(db, "users", staffId));
+        alert("Firestoreの職員データを削除しました。");
+      } catch (e) {
+        alert("削除エラー: " + e.message);
       }
-
-      let csv = "\uFEFF"; // Excel用文字化け防止BOM
-      csv += "日付,職員ID,表示名,希望区分,備考\n";
-
-      Object.values(shiftData).forEach(s => {
-        const staff = staffList.find(u => u.staffId === s.staffId);
-        const dispName = staff ? staff.displayName : s.staffId;
-        const memo = (s.memo || "").replace(/"/g, '""');
-
-        csv += `"${s.date}","${s.staffId}","${dispName}","${s.type}","${memo}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `シフト希望集計_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
     };
   </script>
 </body>
