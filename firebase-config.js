@@ -4,7 +4,7 @@ import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// ★ Firebaseコンソールで取得した設定情報に差し替えてください
+// ★ ご自身のFirebaseプロジェクト設定に書き換えてください
 const firebaseConfig = {
   apiKey: "AIzaSyBRC4LFi5zqFTtDZtrsAEFSs99F1nlnPYA",
   authDomain: "shift-app-2026-ddb1a.firebaseapp.com",
@@ -14,11 +14,8 @@ const firebaseConfig = {
   appId: "1:645356176933:web:2a01952e35d9382d4961cc"
 };
 
-// Firebaseの初期化
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// admin.html や index.html から使えるようにエクスポートします
 export { db, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where };
