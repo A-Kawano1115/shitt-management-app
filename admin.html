@@ -137,7 +137,11 @@
         </div>
         <div class="form-group">
           <label for="staff-name">氏名 (例: 山田 太郎)</label>
-          <input type="text" id="staff-name" class="form-control" required>
+          <input type="text" id="staff-name" class="form-control" required placeholder="フルネーム">
+        </div>
+        <div class="form-group">
+          <label for="display-name">表示名 (例: 山田)</label>
+          <input type="text" id="display-name" class="form-control" required placeholder="カレンダー等で表示する名前">
         </div>
         <div class="form-group">
           <label for="password">初期パスワード</label>
@@ -162,12 +166,13 @@
           <tr>
             <th>ID</th>
             <th>氏名</th>
+            <th>表示名</th>
             <th>権限</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody id="staff-table-body">
-          <tr><td colspan="4">読み込み中...</td></tr>
+          <tr><td colspan="5">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -180,12 +185,7 @@
 
     // ↓↓↓ ここにapp.htmlと同じfirebaseConfigを貼り付けてください ↓↓↓
     const firebaseConfig = {
-      apiKey: "AIzaSyBRC4LFi5zqFTtDZtrsAEFSs99F1nlnPYA",
-      authDomain: "shift-app-2026-ddb1a.firebaseapp.com",
-      projectId: "shift-app-2026-ddb1a",
-      storageBucket: "shift-app-2026-ddb1a.firebasestorage.app",
-      messagingSenderId: "645356176933",
-      appId: "1:645356176933:web:2a01952e35d9382d4961cc"
+
     };
     // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -226,6 +226,7 @@
       
       const staffId = document.getElementById("staff-id").value.trim();
       const name = document.getElementById("staff-name").value.trim();
+      const displayName = document.getElementById("display-name").value.trim();
       const password = document.getElementById("password").value;
       const role = document.getElementById("role").value;
       const btn = document.getElementById("btn-create");
@@ -246,11 +247,12 @@
           uid: cred.user.uid,
           staffId: staffId,
           name: name,
+          displayName: displayName,
           role: role,
           createdAt: new Date()
         });
 
-        alert(`職員「${name} (${staffId})」を登録しました！`);
+        alert(`職員「${displayName} (${staffId})」を登録しました！`);
         document.getElementById("add-staff-form").reset();
       } catch (error) {
         console.error("登録エラー:", error);
@@ -268,7 +270,7 @@
         tbody.innerHTML = "";
 
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="4">登録されている職員はいません</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5">登録されている職員はいません</td></tr>';
           return;
         }
 
@@ -282,6 +284,7 @@
           tr.innerHTML = `
             <td><strong>${data.staffId}</strong></td>
             <td>${data.name || "-"}</td>
+            <td>${data.displayName || data.name || "-"}</td>
             <td><span class="role-badge ${roleClass}">${roleLabel}</span></td>
             <td>
               <button class="btn-del-sm" onclick="deleteStaff('${data.staffId}')">削除</button>
