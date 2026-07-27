@@ -28,7 +28,7 @@
     .header-actions { display: flex; align-items: center; gap: 10px; }
     
     .btn-admin {
-      display: none; /* 初期状態は非表示（管理者のみJSで表示） */
+      display: none; /* 管理者のみJSで表示 */
       background: #3b82f6;
       color: white;
       border: none;
@@ -73,6 +73,7 @@
       font-size: 14px;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
+      background-color: white;
     }
 
     .notice-bar {
@@ -146,7 +147,7 @@
     <div class="period-selector">
       <label for="target-period">表示期間:</label>
       <select id="target-period">
-        <!-- JSで動的に選択肢（前月〜翌々月）を生成します -->
+        <!-- JSで動的に選択肢（前期間〜翌々期間）を生成します -->
       </select>
     </div>
 
@@ -210,7 +211,7 @@
             const displayName = currentUserData.displayName || currentUserData.name || currentUserId;
             document.getElementById("user-display-name").textContent = `${displayName} 様 (${currentUserId})`;
 
-            // 管理者(role === 'admin')の場合は「⚙ 管理画面」ボタンを表示
+            // 管理者の場合は「⚙ 管理画面」ボタンを表示
             if (currentUserData.role === "admin") {
               document.getElementById("btn-admin").style.display = "inline-block";
             }
@@ -227,7 +228,6 @@
         }
 
       } else {
-        // 未ログイン時はログイン画面へ戻す
         window.location.href = "index.html";
       }
     });
@@ -237,30 +237,47 @@
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
-    // 期間選択ドロップダウンの生成（当月を中心に前後月を表示）
+    // 締め切りルール（20日締め）に基づくベース月算定
+    function getBaseTargetDate(now) {
+      const year = now.getFullYear();
+      const month = now.getMonth(); // 0-indexed (6 = 7月)
+      const day = now.getDate();
+
+      // 20日以前なら「翌月16日開始分」、21日以降なら「翌々月16日開始分」が対象
+      if (day <= 20) {
+        return new Date(year, month + 1, 16);
+      } else {
+        return new Date(year, month + 2, 16);
+      }
+    }
+
+    // 期間選択ドロップダウンの生成（前期間1つ + 当期間(デフォルト) + 翌期間 + 翌々期間 の計4期間）
     function initPeriodSelector() {
       const select = document.getElementById("target-period");
       select.innerHTML = "";
       
       const now = new Date();
-      // -1（前月）〜 +2（翌々月）の4つの期間を作成
-      for (let i = -1; i <= 2; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 16);
-        const year = d.getFullYear();
-        const month = d.getMonth() + 1;
-        
-        // 次の月の15日
-        const nextD = new Date(year, d.getMonth() + 1, 15);
-        const nextYear = nextD.getFullYear();
-        const nextMonth = nextD.getMonth() + 1;
+      const baseDate = getBaseTargetDate(now); // 例: 7/26なら 9/16開始分
 
-        const val = `${year}-${String(month).padStart(2, '0')}`;
-        const label = `${year}年${month}月16日 〜 ${nextYear}年${nextMonth}月15日分`;
+      // i = -1 (前期間), 0 (当期間/デフォルト), 1 (翌期間), 2 (翌々期間)
+      for (let i = -1; i <= 2; i++) {
+        const startD = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 16);
+        const endD = new Date(startD.getFullYear(), startD.getMonth() + 1, 15);
+
+        const startY = startD.getFullYear();
+        const startM = startD.getMonth() + 1;
+        const endY = endD.getFullYear();
+        const endM = endD.getMonth() + 1;
+
+        const val = `${startY}-${String(startM).padStart(2, '0')}`;
+        const label = `${startY}年${startM}月16日 〜 ${endY}年${endM}月15日分`;
 
         const opt = document.createElement("option");
         opt.value = val;
         opt.textContent = label;
-        if (i === 0) opt.selected = true; // デフォルトは今期
+        
+        // i === 0 (当期間) をデフォルト選択
+        if (i === 0) opt.selected = true;
         select.appendChild(opt);
       }
 
@@ -335,7 +352,6 @@
       const btn = document.getElementById("btn-save-shift");
 
       const selects = document.querySelectorAll(".shift-select");
-      const notes = document.querySelectorAll(".shift-note");
 
       const daysData = {};
       selects.forEach((sel) => {
