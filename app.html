@@ -339,14 +339,16 @@
       return !!holidayMap[dateStr];
     }
 
-    // 20日締めルールに基づく4期間生成
+    // 20日締めルールに基づく4期間生成（修正版：7/27時点で当期が9/16〜10/15になるロジック）
     function generate4Periods() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth();
       const day = today.getDate();
 
-      const baseOffset = (day > 20) ? 2 : 1;
+      // 1日〜20日：当期 = 翌月16日〜翌々月15日 (offset +1)
+      // 21日〜末日：当期 = 翌々月16日〜3ヶ月後15日 (offset +2)
+      const baseOffset = (day > 20) ? 3 : 2;
       const labels = ["過去1期間", "当期", "未来1期間", "未来2期間"];
       const periods = [];
 
