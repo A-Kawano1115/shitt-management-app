@@ -28,7 +28,7 @@
     .header-actions { display: flex; align-items: center; gap: 10px; }
     
     .btn-admin {
-      display: none; /* 管理者のみJSで表示 */
+      display: none;
       background: #3b82f6;
       color: white;
       border: none;
@@ -64,7 +64,7 @@
       display: flex;
       align-items: center;
       gap: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       flex-wrap: wrap;
     }
     .period-selector label { font-weight: bold; font-size: 14px; }
@@ -86,28 +86,80 @@
       border-radius: 0 4px 4px 0;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-      background: white;
+    /* カレンダーグリッドレイアウト */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 25px;
     }
-    th, td {
-      border: 1px solid #e2e8f0;
-      padding: 10px;
-      text-align: center;
-      font-size: 14px;
-    }
-    th { background: #f1f5f9; font-weight: bold; }
-    .sat { color: #2563eb; background: #eff6ff; }
-    .sun { color: #dc2626; background: #fef2f2; }
 
-    select.shift-select {
+    .calendar-day-header {
+      text-align: center;
+      font-weight: bold;
+      padding: 8px 0;
+      background: #f1f5f9;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .calendar-day-header.sat { color: #2563eb; background: #eff6ff; }
+    .calendar-day-header.sun { color: #dc2626; background: #fef2f2; }
+
+    .calendar-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 110px;
+    }
+    .calendar-card.empty {
+      background: #f8fafc;
+      border: 1px dashed #e2e8f0;
+    }
+    .calendar-card.sat { background: #f8fafc; border-color: #bfdbfe; }
+    .calendar-card.sun { background: #fff5f5; border-color: #fecaca; }
+
+    .card-date-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 13px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* カレンダー内の各入力フィールド */
+    .shift-select {
       width: 100%;
-      padding: 6px;
+      padding: 4px;
+      font-size: 12px;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
+      background: white;
+    }
+
+    .shift-note {
+      width: 100%;
+      padding: 4px;
+      font-size: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+
+    /* 月の区切りヘッダー */
+    .month-divider {
+      grid-column: 1 / -1;
+      background: #1e293b;
+      color: white;
+      padding: 6px 12px;
+      font-weight: bold;
       font-size: 14px;
+      border-radius: 4px;
+      margin-top: 10px;
     }
 
     .btn-save {
@@ -121,11 +173,19 @@
       cursor: pointer;
       display: block;
       width: 100%;
-      max-width: 200px;
+      max-width: 220px;
       margin: 0 auto;
     }
     .btn-save:hover { background: #059669; }
     .btn-save:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+      .calendar-grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+      .calendar-day-header { display: none; }
+      .calendar-card.empty { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -155,21 +215,11 @@
       毎月20日締め切り（翌日21日朝6:00以降は変更できません）
     </div>
 
-    <!-- シフト入力用テーブル -->
+    <!-- シフト入力用カレンダー -->
     <form id="shift-form">
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 120px;">日付</th>
-            <th style="width: 80px;">曜日</th>
-            <th>希望シフト</th>
-            <th>備考・連絡事項</th>
-          </tr>
-        </thead>
-        <tbody id="calendar-body">
-          <tr><td colspan="4" style="padding: 20px;">データ読み込み中...</td></tr>
-        </tbody>
-      </table>
+      <div id="calendar-grid" class="calendar-grid">
+        <div style="grid-column: 1/-1; text-align: center; padding: 20px;">データ読み込み中...</div>
+      </div>
 
       <button type="submit" id="btn-save-shift" class="btn-save">希望を保存</button>
     </form>
@@ -204,14 +254,12 @@
         currentUserId = user.email.replace("@shift.local", "");
 
         try {
-          // Firestoreからユーザー情報を取得
           const userDoc = await getDoc(doc(db, "users", currentUserId));
           if (userDoc.exists()) {
             currentUserData = userDoc.data();
             const displayName = currentUserData.displayName || currentUserData.name || currentUserId;
             document.getElementById("user-display-name").textContent = `${displayName} 様 (${currentUserId})`;
 
-            // 管理者の場合は「⚙ 管理画面」ボタンを表示
             if (currentUserData.role === "admin") {
               document.getElementById("btn-admin").style.display = "inline-block";
             }
@@ -219,7 +267,6 @@
             document.getElementById("user-display-name").textContent = `ID: ${currentUserId}`;
           }
 
-          // 期間選択ドロップダウンの初期化とカレンダー描画
           initPeriodSelector();
           loadCalendar();
 
@@ -240,10 +287,9 @@
     // 締め切りルール（20日締め）に基づくベース月算定
     function getBaseTargetDate(now) {
       const year = now.getFullYear();
-      const month = now.getMonth(); // 0-indexed (6 = 7月)
+      const month = now.getMonth();
       const day = now.getDate();
 
-      // 20日以前なら「翌月16日開始分」、21日以降なら「翌々月16日開始分」が対象
       if (day <= 20) {
         return new Date(year, month + 1, 16);
       } else {
@@ -251,15 +297,14 @@
       }
     }
 
-    // 期間選択ドロップダウンの生成（前期間1つ + 当期間(デフォルト) + 翌期間 + 翌々期間 の計4期間）
+    // 期間選択ドロップダウンの生成（4期間）
     function initPeriodSelector() {
       const select = document.getElementById("target-period");
       select.innerHTML = "";
       
       const now = new Date();
-      const baseDate = getBaseTargetDate(now); // 例: 7/26なら 9/16開始分
+      const baseDate = getBaseTargetDate(now);
 
-      // i = -1 (前期間), 0 (当期間/デフォルト), 1 (翌期間), 2 (翌々期間)
       for (let i = -1; i <= 2; i++) {
         const startD = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 16);
         const endD = new Date(startD.getFullYear(), startD.getMonth() + 1, 15);
@@ -276,7 +321,6 @@
         opt.value = val;
         opt.textContent = label;
         
-        // i === 0 (当期間) をデフォルト選択
         if (i === 0) opt.selected = true;
         select.appendChild(opt);
       }
@@ -284,18 +328,16 @@
       select.addEventListener("change", loadCalendar);
     }
 
-    // カレンダーテーブルの生成と既存データの読み込み
+    // カレンダーグリッドの生成とデータ読み込み
     async function loadCalendar() {
       const periodVal = document.getElementById("target-period").value;
-      const tbody = document.getElementById("calendar-body");
-      tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;">読み込み中...</td></tr>';
+      const grid = document.getElementById("calendar-grid");
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px;">読み込み中...</div>';
 
-      // 選択された期間の開始日（16日）と終了日（翌月15日）を算出
       const [year, month] = periodVal.split("-").map(Number);
       const startDate = new Date(year, month - 1, 16);
       const endDate = new Date(year, month, 15);
 
-      // Firestore から既存のシフト希望データを取得
       const shiftDocId = `${currentUserId}_${periodVal}`;
       let savedShifts = {};
       try {
@@ -307,38 +349,65 @@
         console.error("シフトデータ読み込みエラー:", e);
       }
 
-      // テーブル行の生成
-      tbody.innerHTML = "";
-      const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+      grid.innerHTML = "";
+
+      // 曜日ヘッダーの描画
+      const dayLabels = ["日", "月", "火", "水", "木", "金", "土"];
+      dayLabels.forEach((lbl, idx) => {
+        const h = document.createElement("div");
+        h.className = `calendar-day-header ${idx === 6 ? 'sat' : idx === 0 ? 'sun' : ''}`;
+        h.textContent = lbl;
+        grid.appendChild(h);
+      });
+
       let curr = new Date(startDate);
+      let currentDisplayedMonth = -1;
 
       while (curr <= endDate) {
         const dateStr = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
         const dayOfWeek = curr.getDay();
-        const dayClass = dayOfWeek === 6 ? "sat" : dayOfWeek === 0 ? "sun" : "";
+        const currMonth = curr.getMonth() + 1;
+
+        // 月が変わった際に区分ヘッダーを挿入し、カレンダーの1日目の位置（空セル）を合わせる
+        if (currMonth !== currentDisplayedMonth) {
+          currentDisplayedMonth = currMonth;
+
+          const divider = document.createElement("div");
+          divider.className = "month-divider";
+          divider.textContent = `${curr.getFullYear()}年 ${currMonth}月`;
+          grid.appendChild(divider);
+
+          // 1日目までの空白セルを埋める
+          for (let i = 0; i < dayOfWeek; i++) {
+            const emptyCell = document.createElement("div");
+            emptyCell.className = "calendar-card empty";
+            grid.appendChild(emptyCell);
+          }
+        }
+
         const saved = savedShifts[dateStr] || { shift: "", note: "" };
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${curr.getMonth() + 1}/${curr.getDate()}</td>
-          <td class="${dayClass}">${dayNames[dayOfWeek]}</td>
-          <td>
-            <select class="shift-select" data-date="${dateStr}">
-              <option value="" ${saved.shift === "" ? "selected" : ""}>-- 選択 --</option>
-              <option value="日勤" ${saved.shift === "日勤" ? "selected" : ""}>日勤</option>
-              <option value="早番" ${saved.shift === "早番" ? "selected" : ""}>早番</option>
-              <option value="遅番" ${saved.shift === "遅番" ? "selected" : ""}>遅番</option>
-              <option value="夜勤" ${saved.shift === "夜勤" ? "selected" : ""}>夜勤</option>
-              <option value="希望休" ${saved.shift === "希望休" ? "selected" : ""}>希望休</option>
-            </select>
-          </td>
-          <td>
-            <input type="text" class="shift-note" data-date="${dateStr}" value="${saved.note || ''}" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px;" placeholder="備考">
-          </td>
-        `;
-        tbody.appendChild(tr);
+        const card = document.createElement("div");
+        const cardClass = dayOfWeek === 6 ? "sat" : dayOfWeek === 0 ? "sun" : "";
+        card.className = `calendar-card ${cardClass}`;
 
-        // 次の日へ
+        card.innerHTML = `
+          <div class="card-date-header">
+            <span>${currMonth}/${curr.getDate()}</span>
+            <span>(${dayLabels[dayOfWeek]})</span>
+          </div>
+          <select class="shift-select" data-date="${dateStr}">
+            <option value="" ${saved.shift === "" ? "selected" : ""}>-- 選択 --</option>
+            <option value="日勤" ${saved.shift === "日勤" ? "selected" : ""}>日勤</option>
+            <option value="早番" ${saved.shift === "早番" ? "selected" : ""}>早番</option>
+            <option value="遅番" ${saved.shift === "遅番" ? "selected" : ""}>遅番</option>
+            <option value="夜勤" ${saved.shift === "夜勤" ? "selected" : ""}>夜勤</option>
+            <option value="希望休" ${saved.shift === "希望休" ? "selected" : ""}>希望休</option>
+          </select>
+          <input type="text" class="shift-note" data-date="${dateStr}" value="${saved.note || ''}" placeholder="備考">
+        `;
+
+        grid.appendChild(card);
         curr.setDate(curr.getDate() + 1);
       }
     }
