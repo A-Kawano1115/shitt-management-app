@@ -8,9 +8,10 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       padding: 15px;
       background-color: #f8f9fa;
+      color: #333;
     }
     header {
       display: flex;
@@ -24,6 +25,7 @@
     }
     .header-title { font-size: 18px; font-weight: bold; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
+    
     .btn-nav {
       background: #3b82f6;
       color: white;
@@ -33,7 +35,10 @@
       cursor: pointer;
       text-decoration: none;
       font-size: 13px;
+      font-weight: bold;
     }
+    .btn-nav:hover { background: #2563eb; }
+
     .btn-logout {
       background: #ef4444;
       color: white;
@@ -43,6 +48,8 @@
       cursor: pointer;
       font-size: 13px;
     }
+    .btn-logout:hover { background: #dc2626; }
+
     .container {
       display: grid;
       grid-template-columns: 1fr 2fr;
@@ -51,6 +58,7 @@
     @media (max-width: 768px) {
       .container { grid-template-columns: 1fr; }
     }
+
     .card {
       background: white;
       padding: 20px;
@@ -65,6 +73,7 @@
       border-bottom: 2px solid #e2e8f0;
       padding-bottom: 8px;
     }
+
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
     .form-control {
@@ -74,6 +83,7 @@
       border: 1px solid #cbd5e1;
       border-radius: 4px;
     }
+
     .btn-submit {
       width: 100%;
       background: #10b981;
@@ -84,8 +94,11 @@
       border-radius: 4px;
       cursor: pointer;
       margin-top: 10px;
+      font-size: 14px;
     }
     .btn-submit:hover { background: #059669; }
+    .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -97,6 +110,7 @@
       text-align: left;
     }
     th { background: #f1f5f9; font-weight: bold; }
+
     .role-badge {
       padding: 2px 6px;
       border-radius: 4px;
@@ -105,6 +119,7 @@
     }
     .role-admin { background: #dbeafe; color: #1e40af; }
     .role-staff { background: #f3f4f6; color: #374151; }
+
     .btn-del-sm {
       background: #ef4444;
       color: white;
@@ -114,6 +129,7 @@
       cursor: pointer;
       font-size: 12px;
     }
+    .btn-del-sm:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -121,7 +137,8 @@
   <header>
     <div class="header-title">勤務希望管理システム【管理者専用】</div>
     <div class="header-actions">
-      <a href="app.html" class="btn-nav">カレンダー画面へ</a>
+      <!-- カレンダー画面へ戻るボタン -->
+      <a href="app.html" class="btn-nav">◀ カレンダー画面へ</a>
       <button id="btn-logout" class="btn-logout">ログアウト</button>
     </div>
   </header>
@@ -132,7 +149,7 @@
       <div class="card-title">新規職員アカウント作成</div>
       <form id="add-staff-form">
         <div class="form-group">
-          <label for="staff-id">スタッフID (例: 1002)</label>
+          <label for="staff-id">スタッフID (例: 1003)</label>
           <input type="text" id="staff-id" class="form-control" required placeholder="半角英数字">
         </div>
         <div class="form-group">
@@ -141,7 +158,7 @@
         </div>
         <div class="form-group">
           <label for="display-name">表示名 (例: 山田)</label>
-          <input type="text" id="display-name" class="form-control" required placeholder="カレンダー等で表示する名前">
+          <input type="text" id="display-name" class="form-control" required placeholder="カレンダーで表示する名前">
         </div>
         <div class="form-group">
           <label for="password">初期パスワード</label>
@@ -172,7 +189,7 @@
           </tr>
         </thead>
         <tbody id="staff-table-body">
-          <tr><td colspan="5">読み込み中...</td></tr>
+          <tr><td colspan="5" style="text-align: center; padding: 20px;">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -183,9 +200,14 @@
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // ↓↓↓ ここにapp.htmlと同じfirebaseConfigを貼り付けてください ↓↓↓
+    // ↓↓↓ ここにご自身の firebaseConfig を貼り付けてください ↓↓↓
     const firebaseConfig = {
-
+      apiKey: "AIzaSyBRC4LFi5zqFTtDZtrsAEFSs99F1nlnPYA",
+      authDomain: "shift-app-2026-ddb1a.firebaseapp.com",
+      projectId: "shift-app-2026-ddb1a",
+      storageBucket: "shift-app-2026-ddb1a.firebasestorage.app",
+      messagingSenderId: "645356176933",
+      appId: "1:645356176933:web:2a01952e35d9382d4961cc"
     };
     // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -195,22 +217,27 @@
 
     let currentUserId = "";
 
-    // 認証状態の監視
+    // 認証状態と管理者権限の検証
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUserId = user.email.replace("@shift.local", "");
         
-        // 管理者権限チェック
-        const userDoc = await getDoc(doc(db, "users", currentUserId));
-        if (!userDoc.exists() || userDoc.data().role !== "admin") {
-          alert("管理者権限がありません。カレンダー画面に移動します。");
-          window.location.href = "app.html";
-          return;
-        }
+        try {
+          // Firestoreから管理者かどうかのチェック
+          const userDoc = await getDoc(doc(db, "users", currentUserId));
+          if (!userDoc.exists() || userDoc.data().role !== "admin") {
+            alert("管理者権限がありません。カレンダー画面へ戻ります。");
+            window.location.href = "app.html";
+            return;
+          }
 
-        // 職員一覧をリアルタイム読み込み
-        listenStaffList();
+          // 権限確認OKなら職員一覧を読み込み
+          listenStaffList();
+        } catch (error) {
+          console.error("権限チェックエラー:", error);
+        }
       } else {
+        // 未ログイン時はログイン画面へ
         window.location.href = "index.html";
       }
     });
@@ -220,7 +247,7 @@
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
-    // 職員追加処理
+    // 職員アカウント追加処理
     document.getElementById("add-staff-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       
@@ -235,7 +262,7 @@
       btn.textContent = "登録中...";
 
       try {
-        // 管理者セッションを維持するため、一時的なFirebaseアプリを立ち上げてアカウント作成
+        // 現在の管理者ログインセッションを切らないよう、別インスタンスで作成
         const tempApp = initializeApp(firebaseConfig, "SecondaryApp");
         const tempAuth = getAuth(tempApp);
         
@@ -252,7 +279,7 @@
           createdAt: new Date()
         });
 
-        alert(`職員「${displayName} (${staffId})」を登録しました！`);
+        alert(`職員「${displayName} (${staffId})」のアカウントを作成しました！`);
         document.getElementById("add-staff-form").reset();
       } catch (error) {
         console.error("登録エラー:", error);
@@ -263,14 +290,14 @@
       }
     });
 
-    // 職員一覧のリアルタイム表示
+    // 職員一覧のリアルタイム反映処理
     function listenStaffList() {
       onSnapshot(collection(db, "users"), (snapshot) => {
         const tbody = document.getElementById("staff-table-body");
         tbody.innerHTML = "";
 
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="5">登録されている職員はいません</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px;">登録されている職員はいません</td></tr>';
           return;
         }
 
@@ -296,14 +323,22 @@
     }
 
     // 職員削除処理
-    window.deleteStaff = async function(staffId) {
-      if (!confirm(`スタッフID: ${staffId} の登録情報をFirestoreから削除しますか？\n(※注意: Authenticationのアカウント削除は別途Firebaseコンソールで行う必要があります)`)) return;
+    window.deleteStaff = async function(targetStaffId) {
+      if (targetStaffId === currentUserId) {
+        alert("現在ログイン中の自分自身のアカウントは削除できません。");
+        return;
+      }
+
+      if (!confirm(`スタッフID: ${targetStaffId} の職員データをFirestoreから削除しますか？\n(※Firestoreから削除されます。)`)) {
+        return;
+      }
 
       try {
-        await deleteDoc(doc(db, "users", staffId));
-        alert("Firestoreの職員データを削除しました。");
+        await deleteDoc(doc(db, "users", targetStaffId));
+        alert("Firestoreから職員データを削除しました。");
       } catch (e) {
-        alert("削除エラー: " + e.message);
+        console.error("削除エラー:", e);
+        alert("削除に失敗しました: " + e.message);
       }
     };
   </script>
