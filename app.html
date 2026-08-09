@@ -36,7 +36,7 @@
       cursor: pointer;
       font-size: 13px;
       font-weight: bold;
-      display: none; /* 初期状態は非表示 */
+      display: none;
     }
     .btn-admin:hover { background: #e0a800; }
 
@@ -124,12 +124,12 @@
       background: white;
       border: 1px solid #dee2e6;
       border-radius: 4px;
-      min-height: 110px;
+      min-height: 140px;
       padding: 6px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      gap: 4px;
+      gap: 2px;
       cursor: pointer;
       transition: background-color 0.2s;
     }
@@ -144,60 +144,57 @@
       background-color: #ffe3e8;
     }
 
-    /* 編集不可（過去期間や締め切り後）のセルスタイル */
     .cal-cell.disabled {
       background-color: #f8f9fa;
       cursor: not-allowed;
-      opacity: 0.7;
-    }
-    .cal-cell.disabled.sun, .cal-cell.disabled.holiday {
-      background-color: #fcf0f2;
-      opacity: 0.8;
+      opacity: 0.85;
     }
 
     .date-num {
       font-weight: bold;
       font-size: 13px;
       color: #333;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .sun .date-num, .holiday .date-num { color: #dc3545; }
     .sat .date-num { color: #0056b3; }
 
-    .shift-tag {
-      align-self: center;
-      padding: 6px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 12px;
-      text-align: center;
-      width: 95%;
-      box-sizing: border-box;
-      margin-top: 4px;
-      word-break: break-all;
-    }
-    
-    .shift-当直〇, .shift-当直×, .shift-残業× {
-      background-color: #e9ecef; color: #343a40; border: 1px solid #ced4da;
-    }
-    .shift-休み, .shift-有給休暇, .shift-リフレッシュ休暇, .shift-半休（午前）, .shift-半休（午後） {
-      background-color: #ffe3e3; color: #c92a2a; border: 1px solid #ffc9c9;
-    }
-    .shift-出勤, .shift-出張 {
-      background-color: #e7f5ff; color: #1864ab; border: 1px solid #a5d8ff;
-    }
-    .shift-その他（備考欄） {
-      background-color: #ebfbee; color: #2b8a3e; border: 1px solid #b2f2bb;
+    /* タグ一覧コンテナ */
+    .shift-tags-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
     }
 
-    .shift-memo-text {
-      font-size: 10px;
-      color: #666;
-      text-align: center;
-      margin-top: 2px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .shift-tag {
+      padding: 3px 5px;
+      border-radius: 3px;
+      font-size: 11px;
+      text-align: left;
+      width: 100%;
+      box-sizing: border-box;
+      word-break: break-all;
+      line-height: 1.2;
+    }
+    
+    /* 自分の希望には太枠と★マーク */
+    .shift-tag.is-own {
+      font-weight: bold;
+      border-width: 2px !important;
+    }
+
+    /* 当直カテゴリ（上段） */
+    .shift-duty {
+      background-color: #e9ecef; color: #343a40; border: 1px solid #ced4da;
+    }
+    /* 休みカテゴリ（中段） */
+    .shift-off {
+      background-color: #ffe3e3; color: #c92a2a; border: 1px solid #ffc9c9;
+    }
+    /* 出勤カテゴリ（下段） */
+    .shift-work {
+      background-color: #e7f5ff; color: #1864ab; border: 1px solid #a5d8ff;
     }
 
     .modal {
@@ -295,7 +292,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-      getFirestore, collection, doc, getDoc, setDoc, deleteDoc, onSnapshot 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
@@ -317,19 +314,26 @@
     let periodList = [];
     let currentPeriodIndex = 1; // 初期選択: 「当期」
     let dateList = [];
-    let shiftsDataMap = {};
+    let allShiftsDataMap = {}; // { date: [ { staffId, type, memo }, ... ] }
+    let usersNameMap = {};     // { staffId: displayName }
     let selectedDateStr = "";
     let isEditableCurrentPeriod = true;
     let holidayMap = {};
 
+    // 希望区分の定義と並び順カテゴリ判定
+    const DUTY_TYPES = ["当直〇", "当直×", "残業×"];
+    const OFF_TYPES  = ["休み", "有給休暇", "リフレッシュ休暇", "半休（午前）", "半休（午後）"];
+    const WORK_TYPES = ["出勤", "出張"];
+
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentStaffId = user.email.replace("@shift.local", "");
-        document.getElementById("user-display").textContent = `ID: ${currentStaffId}`;
         
-        // 管理者権限チェック
+        await loadUsersNameMap();
+        const displayName = usersNameMap[currentStaffId] || currentStaffId;
+        document.getElementById("user-display").textContent = `ログイン中: ${displayName}`;
+        
         checkAdminRole(currentStaffId);
-
         await fetchHolidays();
         initAppView();
       } else {
@@ -337,7 +341,19 @@
       }
     });
 
-    // 管理者権限チェック関数
+    // ユーザー一覧（displayName）読み込み
+    async function loadUsersNameMap() {
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          usersNameMap[docSnap.id] = data.displayName || docSnap.id;
+        });
+      } catch (e) {
+        console.warn("ユーザー情報取得失敗", e);
+      }
+    }
+
     async function checkAdminRole(staffId) {
       try {
         const userDoc = await getDoc(doc(db, "users", staffId));
@@ -357,7 +373,6 @@
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
-    // 日本の祝日を取得するAPI呼び出し
     async function fetchHolidays() {
       try {
         const res = await fetch('https://holidays-jp.github.io/api/v1/date.json');
@@ -373,7 +388,6 @@
       return !!holidayMap[dateStr];
     }
 
-    // 20日締めルールに基づく4期間生成
     function generate4Periods() {
       const today = new Date();
       const year = today.getFullYear();
@@ -415,14 +429,15 @@
       renderPeriodTabs();
       switchPeriod(1);
 
-      // リアルタイムデータ同期
+      // 全職員の希望データをリアルタイム監視
       onSnapshot(collection(db, "shifts"), (snapshot) => {
-        shiftsDataMap = {};
+        allShiftsDataMap = {};
         snapshot.forEach(docSnap => {
           const data = docSnap.data();
-          if (data.staffId === currentStaffId) {
-            shiftsDataMap[data.date] = data;
+          if (!allShiftsDataMap[data.date]) {
+            allShiftsDataMap[data.date] = [];
           }
+          allShiftsDataMap[data.date].push(data);
         });
         renderCalendar();
       });
@@ -492,7 +507,6 @@
       const firstDateObj = new Date(dateList[0]);
       const startDayOfWeek = firstDateObj.getDay();
 
-      // 月初の空セル作成
       for (let i = 0; i < startDayOfWeek; i++) {
         const emptyCell = document.createElement("div");
         emptyCell.style.background = "#f1f3f5";
@@ -521,37 +535,68 @@
         dateEl.textContent = `${d.getMonth() + 1}/${dayNum}`;
         cell.appendChild(dateEl);
 
-        const shift = shiftsDataMap[dStr];
-        if (shift) {
-          const tag = document.createElement("div");
-          tag.className = `shift-tag shift-${shift.type}`;
-          tag.textContent = shift.type;
-          cell.appendChild(tag);
+        // その日の全希望リスト
+        const dayShifts = allShiftsDataMap[dStr] || [];
 
-          if (shift.memo) {
-            const memoEl = document.createElement("div");
-            memoEl.className = "shift-memo-text";
-            memoEl.textContent = shift.memo;
-            cell.appendChild(memoEl);
-          }
-        }
+        // 整理用リスト（その他は除外）
+        const dutyList = [];
+        const offList  = [];
+        const workList = [];
 
+        dayShifts.forEach(s => {
+          if (s.type === "その他（備考欄）") return; // 表示しない
+
+          if (DUTY_TYPES.includes(s.type)) dutyList.push(s);
+          else if (OFF_TYPES.includes(s.type)) offList.push(s);
+          else if (WORK_TYPES.includes(s.type)) workList.push(s);
+        });
+
+        const tagsContainer = document.createElement("div");
+        tagsContainer.className = "shift-tags-container";
+
+        // 上段：当直希望
+        dutyList.forEach(s => tagsContainer.appendChild(createTagElement(s, "shift-duty")));
+        // 中段：休み希望
+        offList.forEach(s => tagsContainer.appendChild(createTagElement(s, "shift-off")));
+        // 下段：出勤希望
+        workList.forEach(s => tagsContainer.appendChild(createTagElement(s, "shift-work")));
+
+        cell.appendChild(tagsContainer);
+
+        // クリック時は自分の希望入力モーダルを開く
         cell.addEventListener("click", () => {
           if (!isEditableCurrentPeriod) return;
-          openInputModal(dStr, shift);
+          const ownShift = dayShifts.find(s => s.staffId === currentStaffId);
+          openInputModal(dStr, ownShift);
         });
 
         calBody.appendChild(cell);
       });
     }
 
-    function openInputModal(dateStr, shift) {
+    // 希望タグエレメント生成関数
+    function createTagElement(shift, categoryClass) {
+      const name = usersNameMap[shift.staffId] || shift.staffId;
+      const isOwn = (shift.staffId === currentStaffId);
+
+      const tag = document.createElement("div");
+      tag.className = `shift-tag ${categoryClass} ${isOwn ? 'is-own' : ''}`;
+      
+      let displayText = `[${shift.type}] ${name}`;
+      if (isOwn) displayText = `★ ` + displayText;
+      if (shift.memo) displayText += ` (${shift.memo})`;
+
+      tag.textContent = displayText;
+      return tag;
+    }
+
+    function openInputModal(dateStr, ownShift) {
       selectedDateStr = dateStr;
       document.getElementById("modal-date-info").textContent = `${dateStr} の希望選択`;
 
-      if (shift) {
-        document.getElementById("shift-type").value = shift.type;
-        document.getElementById("shift-memo").value = shift.memo || "";
+      if (ownShift) {
+        document.getElementById("shift-type").value = ownShift.type;
+        document.getElementById("shift-memo").value = ownShift.memo || "";
         document.getElementById("btn-delete").style.display = "block";
       } else {
         document.getElementById("shift-type").value = "休み";
