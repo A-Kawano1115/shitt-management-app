@@ -27,6 +27,19 @@
     .header-title { font-size: 18px; font-weight: bold; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
     
+    .btn-admin {
+      background: #ffc107;
+      color: #212529;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+      display: none; /* 初期状態は非表示 */
+    }
+    .btn-admin:hover { background: #e0a800; }
+
     .btn-logout {
       background: #dc3545;
       color: white;
@@ -207,6 +220,7 @@
     <div class="header-title">勤務希望入力</div>
     <div class="header-actions">
       <span id="user-display" style="font-size:14px;">---</span>
+      <button id="btn-admin" class="btn-admin">管理者画面へ</button>
       <button id="btn-logout" class="btn-logout">ログアウト</button>
     </div>
   </header>
@@ -281,7 +295,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-      getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot 
+      getFirestore, collection, doc, getDoc, setDoc, deleteDoc, onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
@@ -312,12 +326,32 @@
       if (user) {
         currentStaffId = user.email.replace("@shift.local", "");
         document.getElementById("user-display").textContent = `ID: ${currentStaffId}`;
+        
+        // 管理者権限チェック
+        checkAdminRole(currentStaffId);
+
         await fetchHolidays();
         initAppView();
       } else {
         window.location.href = "index.html";
       }
     });
+
+    // 管理者権限チェック関数
+    async function checkAdminRole(staffId) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", staffId));
+        if (userDoc.exists() && userDoc.data().role === "admin") {
+          const btnAdmin = document.getElementById("btn-admin");
+          btnAdmin.style.display = "inline-block";
+          btnAdmin.addEventListener("click", () => {
+            window.location.href = "admin.html";
+          });
+        }
+      } catch (e) {
+        console.error("権限確認エラー:", e);
+      }
+    }
 
     document.getElementById("btn-logout").addEventListener("click", () => {
       signOut(auth).then(() => { window.location.href = "index.html"; });
@@ -339,15 +373,13 @@
       return !!holidayMap[dateStr];
     }
 
-    // 20日締めルールに基づく4期間生成（修正版：7/27時点で当期が9/16〜10/15になるロジック）
+    // 20日締めルールに基づく4期間生成
     function generate4Periods() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth();
       const day = today.getDate();
 
-      // 1日〜20日：当期 = 翌月16日〜翌々月15日 (offset +1)
-      // 21日〜末日：当期 = 翌々月16日〜3ヶ月後15日 (offset +2)
       const baseOffset = (day > 20) ? 3 : 2;
       const labels = ["過去1期間", "当期", "未来1期間", "未来2期間"];
       const periods = [];
