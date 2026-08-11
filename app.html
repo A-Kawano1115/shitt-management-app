@@ -292,7 +292,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-      getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, query, where 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
@@ -333,7 +333,7 @@
         const displayName = usersNameMap[currentStaffId] || currentStaffId;
         document.getElementById("user-display").textContent = `ログイン中: ${displayName}`;
         
-        checkAdminRole(currentStaffId);
+        await checkAdminRole(currentStaffId);
         await fetchHolidays();
         initAppView();
       } else {
@@ -347,22 +347,45 @@
         const snap = await getDocs(collection(db, "users"));
         snap.forEach(docSnap => {
           const data = docSnap.data();
-          usersNameMap[docSnap.id] = data.displayName || docSnap.id;
+          // ドキュメント内の staffId が定義されているか fallback して記録
+          const sId = data.staffId || docSnap.id;
+          usersNameMap[sId] = data.displayName || data.name || sId;
         });
       } catch (e) {
         console.warn("ユーザー情報取得失敗", e);
       }
     }
 
+    // 管理者権限チェック（ID一致・フィールド一致・大文字小文字対応）
     async function checkAdminRole(staffId) {
       try {
-        const userDoc = await getDoc(doc(db, "users", staffId));
-        if (userDoc.exists() && userDoc.data().role === "admin") {
+        let role = null;
+
+        // 1. まずドキュメントID = staffId で直接取得を試みる
+        const userDocRef = doc(db, "users", staffId);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          role = userDoc.data().role;
+        } else {
+          // 2. ドキュメントIDが UID 等で異なる場合、staffId フィールドでクエリ検索する
+          const q = query(collection(db, "users"), where("staffId", "==", staffId));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            role = querySnapshot.docs[0].data().role;
+          }
+        }
+
+        console.log(`[権限チェック] staffId: ${staffId}, 取得したrole: ${role}`);
+
+        if (role && String(role).trim().toLowerCase() === "admin") {
           const btnAdmin = document.getElementById("btn-admin");
           btnAdmin.style.display = "inline-block";
           btnAdmin.addEventListener("click", () => {
             window.location.href = "admin.html";
           });
+        } else {
+          console.warn("管理者権限が確認できませんでした:", role);
         }
       } catch (e) {
         console.error("権限確認エラー:", e);
