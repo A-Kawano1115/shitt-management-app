@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>管理者画面 - 勤務希望管理</title>
-
+  <title>勤務希望管理 - 管理者画面</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -18,7 +17,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #343a40;
+      background: #212529;
       color: white;
       padding: 10px 20px;
       border-radius: 8px;
@@ -27,7 +26,7 @@
     .header-title { font-size: 18px; font-weight: bold; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
     
-    .btn-userpage {
+    .btn-user {
       background: #17a2b8;
       color: white;
       border: none;
@@ -36,7 +35,7 @@
       cursor: pointer;
       font-size: 13px;
     }
-    .btn-userpage:hover { background: #138496; }
+    .btn-user:hover { background: #138496; }
 
     .btn-logout {
       background: #dc3545;
@@ -51,180 +50,180 @@
 
     .card {
       background: white;
-      padding: 20px;
+      padding: 15px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       margin-bottom: 20px;
     }
 
-    /* 左右2カラムレイアウト */
-    .admin-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .admin-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .form-group {
+    .period-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 14px;
-    }
-    select, input[type="text"], input[type="password"] {
-      width: 100%;
+    .period-tabs { display: flex; gap: 5px; flex-wrap: wrap; }
+    .tab-btn {
       padding: 8px 12px;
+      background: #e9ecef;
       border: 1px solid #ced4da;
       border-radius: 4px;
-      font-size: 14px;
-      box-sizing: border-box;
-    }
-
-    .btn-primary {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
       cursor: pointer;
+      font-size: 13px;
       font-weight: bold;
-      font-size: 14px;
+      color: #495057;
     }
-    .btn-primary:hover { background: #218838; }
-
-    .btn-blue {
-      background: #0066cc;
+    .tab-btn.active {
+      background: #212529;
       color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-      width: 100%;
+      border-color: #212529;
     }
-    .btn-blue:hover { background: #0052a3; }
 
-    .help-text {
-      font-size: 12px;
-      color: #6c757d;
-      margin-top: 5px;
+    .table-container {
+      overflow-x: auto;
+      max-width: 100%;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+      font-size: 12px;
+      white-space: nowrap;
     }
+
     th, td {
       border: 1px solid #dee2e6;
-      padding: 8px 10px;
-      text-align: left;
-      font-size: 13px;
+      padding: 6px 8px;
+      text-align: center;
     }
+
     th {
-      background-color: #f1f3f5;
+      background: #f1f3f5;
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
+
+    .staff-col {
+      position: sticky;
+      left: 0;
+      background: #ffffff;
+      font-weight: bold;
+      z-index: 11;
+      text-align: left;
+      min-width: 100px;
+    }
+    th.staff-col {
+      background: #e9ecef;
+      z-index: 12;
+    }
+
+    .cell-editable {
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .cell-editable:hover {
+      background-color: #e2e6ea !important;
+    }
+
+    /* 区分別カラー設定 */
+    .shift-duty { background-color: #fff3cd; color: #856404; font-weight: bold; }
+    .shift-off { background-color: #f8d7da; color: #721c24; font-weight: bold; }
+    .shift-work { background-color: #d1ecf1; color: #0c5460; }
+    
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10000;
+    }
+    .modal-content {
+      background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+    .btn-primary { background: #212529; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-danger { background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-title">管理者専用パネル</div>
+    <div class="header-title">勤務希望管理 (管理者専用)</div>
     <div class="header-actions">
-      <span id="admin-display" style="font-size:14px;">---</span>
-      <button id="btn-userpage" class="btn-userpage">カレンダー画面へ</button>
+      <span id="user-display" style="font-size:14px;">---</span>
+      <button id="btn-user" class="btn-user">一般画面へ</button>
       <button id="btn-logout" class="btn-logout">ログアウト</button>
     </div>
   </header>
 
-  <!-- 1. CSVダウンロード設定 -->
   <div class="card">
-    <h2 style="margin-top:0;">CSV出力設定</h2>
-    <p style="font-size:14px; color:#555; margin-bottom: 15px;">
-      指定した対象期間の全職員の希望データを集計し、Shift作成ソフト取り込み用のCSVファイルをダウンロードします。
-    </p>
-
-    <div class="form-group" style="max-width: 400px;">
-      <label for="period-select">出力対象期間:</label>
-      <select id="period-select"></select>
-      <div class="help-text">※初期状態では毎月の提出対象期間（20日締）が自動選択されています。</div>
+    <div class="period-toolbar">
+      <div id="period-tabs" class="period-tabs"></div>
+      <div id="period-display" style="font-weight:bold; color:#212529;">対象期間: 取得中...</div>
     </div>
 
-    <button id="btn-download-csv" class="btn-primary">CSVをダウンロード</button>
+    <div class="table-container">
+      <table id="admin-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- 2. 職員管理エリア（左右2カラム） -->
-  <div class="admin-grid">
-    <!-- 左側: 職員登録フォーム -->
-    <div class="card">
-      <h2 style="margin-top:0;">職員新規登録</h2>
-      <p style="font-size:13px; color:#555; margin-bottom: 15px;">
-        システムにログインする職員を追加します。
-      </p>
+  <!-- 管理者用 編集モーダル -->
+  <div id="admin-modal" class="modal">
+    <div class="modal-content">
+      <h3>【管理者】希望データの編集</h3>
+      <p style="margin-bottom:5px; font-weight:bold;" id="modal-staff-name">職員名: ----</p>
+      <p style="margin-bottom:15px; color:#555;" id="modal-date-info">日付: ----年--月--日</p>
 
-      <div class="form-group">
-        <label for="new-staff-id">職員ID (staffId):</label>
-        <input type="text" id="new-staff-id" placeholder="例: staff01">
-      </div>
-
-      <div class="form-group">
-        <label for="new-name">職員氏名 (name):</label>
-        <input type="text" id="new-name" placeholder="例: 山田 太郎">
-      </div>
-
-      <div class="form-group">
-        <label for="new-display-name">表記名 (displayName):</label>
-        <input type="text" id="new-display-name" placeholder="例: 山田（カレンダー等に表示）">
-      </div>
-
-      <div class="form-group">
-        <label for="new-password">パスワード:</label>
-        <input type="password" id="new-password" placeholder="6文字以上">
-      </div>
-
-      <div class="form-group">
-        <label for="new-role">権限区分 (role):</label>
-        <select id="new-role">
-          <option value="user">一般職員</option>
-          <option value="admin">管理者</option>
+      <div style="margin-bottom: 15px;">
+        <label for="shift-type" style="display:block; margin-bottom:5px; font-weight:bold;">希望区分:</label>
+        <select id="shift-type" style="width: 100%; padding: 10px; border:1px solid #ccc; border-radius:4px; font-size:15px; background:white;">
+          <optgroup label="── 休みカテゴリ ──">
+            <option value="休み">休み</option>
+            <option value="有給休暇">有給休暇</option>
+            <option value="リフレッシュ休暇">リフレッシュ休暇</option>
+            <option value="半休（午前）">半休（午前）</option>
+            <option value="半休（午後）">半休（午後）</option>
+          </optgroup>
+          <optgroup label="── 当直カテゴリ ──">
+            <option value="当直〇">当直〇</option>
+            <option value="当直×">当直×</option>
+            <option value="残業×">残業×</option>
+          </optgroup>
+          <optgroup label="── 出勤カテゴリ ──">
+            <option value="出勤">出勤</option>
+            <option value="出張">出張</option>
+          </optgroup>
+          <optgroup label="── その他 ──">
+            <option value="その他（備考欄）">その他（備考欄）</option>
+          </optgroup>
         </select>
       </div>
 
-      <button id="btn-register-user" class="btn-blue">職員を登録する</button>
-    </div>
+      <div style="margin-bottom: 15px;">
+        <label for="shift-memo" style="display:block; margin-bottom:5px; font-weight:bold;">備考:</label>
+        <input type="text" id="shift-memo" placeholder="備考を入力" style="width: 100%; padding: 10px; border:1px solid #ccc; border-radius:4px; box-sizing: border-box;">
+      </div>
 
-    <!-- 右側: 登録職員一覧 -->
-    <div class="card">
-      <h2 style="margin-top:0;">登録職員一覧</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>職員ID</th>
-            <th>職員氏名</th>
-            <th>表記名</th>
-            <th>権限</th>
-          </tr>
-        </thead>
-        <tbody id="user-table-body">
-          <tr><td colspan="4">読み込み中...</td></tr>
-        </tbody>
-      </table>
+      <div class="modal-actions">
+        <button id="btn-delete" class="btn-danger">削除</button>
+        <div>
+          <button id="btn-cancel" class="btn-secondary">キャンセル</button>
+          <button id="btn-save" class="btn-primary">保存</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-      getFirestore, collection, doc, getDoc, getDocs, setDoc, onSnapshot 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, query, where 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
@@ -242,61 +241,74 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentAdminId = "";
     let periodList = [];
-    let usersNameMap = {}; // { staffId: displayName }
+    let currentPeriodIndex = 1;
+    let dateList = [];
+    let usersList = [];       // [ { staffId, name }, ... ]
+    let allShiftsMap = {};    // { "date_staffId": { type, memo } }
+
+    let selectedStaffId = "";
+    let selectedDateStr = "";
+
+    const DUTY_TYPES = ["当直〇", "当直×", "残業×"];
+    const OFF_TYPES  = ["休み", "有給休暇", "リフレッシュ休暇", "半休（午前）", "半休（午後）"];
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentAdminId = user.email.replace("@shift.local", "");
+        const loginPrefix = user.email ? user.email.replace("@shift.local", "") : "";
         
-        // 管理者権限チェック
-        const isAdmin = await checkAdminRole(currentAdminId);
+        // 1. 管理者権限チェック（UID, prefix, staffIdのトリプル検索）
+        const isAdmin = await verifyAdminRole(user.uid, loginPrefix);
+        
         if (!isAdmin) {
           alert("管理者権限がありません。");
           window.location.href = "app.html";
           return;
         }
 
-        await loadUsersNameMap();
-        const headerName = usersNameMap[currentAdminId] || currentAdminId;
-        document.getElementById("admin-display").textContent = `管理者: ${headerName}`;
+        document.getElementById("user-display").textContent = `管理者ログイン中`;
 
+        // 2. 職員一覧とデータの読み込み
+        await loadUsers();
         initAdminView();
-        listenUsersList();
       } else {
         window.location.href = "index.html";
       }
     });
 
-    async function checkAdminRole(staffId) {
+    // 柔軟な管理者権限検証関数
+    async function verifyAdminRole(uid, loginPrefix) {
       try {
-        const userDoc = await getDoc(doc(docRefUsers(staffId)));
-        return userDoc.exists() && userDoc.data().role === "admin";
+        let foundData = null;
+
+        // パターンA: docId = uid
+        let uDoc = await getDoc(doc(db, "users", uid));
+        if (uDoc.exists()) foundData = uDoc.data();
+
+        // パターンB: docId = loginPrefix
+        if (!foundData && loginPrefix) {
+          uDoc = await getDoc(doc(doc(db, "users", loginPrefix)));
+          if (uDoc.exists()) foundData = uDoc.data();
+        }
+
+        // パターンC: staffId == loginPrefix
+        if (!foundData && loginPrefix) {
+          const q = query(collection(db, "users"), where("staffId", "==", loginPrefix));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) foundData = qSnap.docs[0].data();
+        }
+
+        if (foundData) {
+          console.log("[admin.html 認証成功]", foundData);
+          return String(foundData.role).trim().toLowerCase() === "admin";
+        }
       } catch (e) {
         console.error("権限確認エラー:", e);
-        return false;
       }
+      return false;
     }
 
-    function docRefUsers(staffId) {
-      return doc(db, "users", staffId);
-    }
-
-    async function loadUsersNameMap() {
-      try {
-        const snap = await getDocs(collection(db, "users"));
-        snap.forEach(docSnap => {
-          const data = docSnap.data();
-          // 表記名(displayName)があればそれを、無ければ氏名(name)やIDを使用
-          usersNameMap[docSnap.id] = data.displayName || data.name || docSnap.id;
-        });
-      } catch (e) {
-        console.warn("ユーザー情報取得失敗", e);
-      }
-    }
-
-    document.getElementById("btn-userpage").addEventListener("click", () => {
+    document.getElementById("btn-user").addEventListener("click", () => {
       window.location.href = "app.html";
     });
 
@@ -304,15 +316,31 @@
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
-    // 期間リストの生成（当期を初期選択に自動設定）
-    function generatePeriodOptions() {
+    async function loadUsers() {
+      usersList = [];
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          const sId = d.staffId || docSnap.id;
+          const name = d.displayName || d.name || sId;
+          usersList.push({ staffId: sId, name: name });
+        });
+        // staffId 順でソート
+        usersList.sort((a, b) => a.staffId.localeCompare(b.staffId));
+      } catch (e) {
+        console.error("職員リストの取得失敗:", e);
+      }
+    }
+
+    function generate4Periods() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth();
       const day = today.getDate();
 
       const baseOffset = (day > 20) ? 3 : 2;
-      const labels = ["前期", "当期（締め対象）", "翌期", "翌々期"];
+      const labels = ["前期", "当期", "翌期", "翌々期"];
       const periods = [];
 
       for (let i = -1; i <= 2; i++) {
@@ -331,7 +359,7 @@
         }
 
         periods.push({
-          isDefault: (i === 0),
+          typeIndex: i,
           shortLabel: labels[i + 1],
           dates: dates,
           startStr: dates[0],
@@ -342,145 +370,170 @@
     }
 
     function initAdminView() {
-      periodList = generatePeriodOptions();
-      const selectEl = document.getElementById("period-select");
-      selectEl.innerHTML = "";
+      periodList = generate4Periods();
+      renderPeriodTabs();
+      switchPeriod(1);
 
-      periodList.forEach((p, idx) => {
-        const opt = document.createElement("option");
-        opt.value = idx;
-        opt.textContent = `[${p.shortLabel}] ${p.startStr} 〜 ${p.endStr}`;
-        if (p.isDefault) {
-          opt.selected = true;
-        }
-        selectEl.appendChild(opt);
+      // 希望データをリアルタイム監視
+      onSnapshot(collection(db, "shifts"), (snapshot) => {
+        allShiftsMap = {};
+        snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          const key = `${d.date}_${d.staffId}`;
+          allShiftsMap[key] = d;
+        });
+        renderMatrixTable();
       });
     }
 
-    // 職員登録処理
-    document.getElementById("btn-register-user").addEventListener("click", async () => {
-      const staffId = document.getElementById("new-staff-id").value.trim();
-      const name = document.getElementById("new-name").value.trim();
-      const displayNameInput = document.getElementById("new-display-name").value.trim();
-      const displayName = displayNameInput || name; // 未入力の場合は氏名を補完
-      const password = document.getElementById("new-password").value.trim();
-      const role = document.getElementById("new-role").value;
+    function renderPeriodTabs() {
+      const container = document.getElementById("period-tabs");
+      container.innerHTML = "";
 
-      if (!staffId || !name || !password) {
-        alert("職員ID、職員氏名、パスワードを入力してください。");
-        return;
-      }
-      if (password.length < 6) {
-        alert("パスワードは6文字以上で設定してください。");
-        return;
-      }
+      periodList.forEach((p, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `tab-btn ${idx === currentPeriodIndex ? 'active' : ''}`;
+        btn.textContent = p.shortLabel;
+        btn.addEventListener("click", () => switchPeriod(idx));
+        container.appendChild(btn);
+      });
+    }
 
-      const email = `${staffId}@shift.local`;
+    function switchPeriod(index) {
+      currentPeriodIndex = index;
+      const target = periodList[index];
+      dateList = target.dates;
 
-      try {
-        // Firebase Authenticationにアカウント生成
-        await createUserWithEmailAndPassword(auth, email, password);
+      document.getElementById("period-display").textContent = 
+        `対象期間: ${target.startStr} 〜 ${target.endStr}`;
 
-        // Firestoreに指定された4項目 (staffId, name, displayName, role) をセット
-        await setDoc(doc(db, "users", staffId), {
-          staffId: staffId,
-          name: name,
-          displayName: displayName,
-          role: role,
-          createdAt: new Date()
+      renderPeriodTabs();
+      renderMatrixTable();
+    }
+
+    function renderMatrixTable() {
+      const thead = document.getElementById("table-head");
+      const tbody = document.getElementById("table-body");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      if (dateList.length === 0) return;
+
+      // --- 1. テーブルヘッダーの生成 ---
+      const headerRow = document.createElement("tr");
+      
+      const thStaff = document.createElement("th");
+      thStaff.className = "staff-col";
+      thStaff.textContent = "職員名";
+      headerRow.appendChild(thStaff);
+
+      dateList.forEach(dStr => {
+        const d = new Date(dStr);
+        const th = document.createElement("th");
+        th.textContent = `${d.getMonth() + 1}/${d.getDate()}`;
+        
+        const dayOfWeek = d.getDay();
+        if (dayOfWeek === 0) th.style.color = "#dc3545";
+        else if (dayOfWeek === 6) th.style.color = "#0056b3";
+
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      // --- 2. テーブルボディ（職員ごとの行）の生成 ---
+      usersList.forEach(u => {
+        const tr = document.createElement("tr");
+
+        const tdStaff = document.createElement("td");
+        tdStaff.className = "staff-col";
+        tdStaff.textContent = u.name;
+        tr.appendChild(tdStaff);
+
+        dateList.forEach(dStr => {
+          const td = document.createElement("td");
+          td.className = "cell-editable";
+
+          const key = `${dStr}_${u.staffId}`;
+          const shift = allShiftsMap[key];
+
+          if (shift) {
+            let label = shift.type;
+            if (shift.memo) label += `*`;
+            td.textContent = label;
+
+            if (DUTY_TYPES.includes(shift.type)) td.classList.add("shift-duty");
+            else if (OFF_TYPES.includes(shift.type)) td.classList.add("shift-off");
+            else td.classList.add("shift-work");
+          }
+
+          // 管理者は常に全セルクリック・編集可能（締切後でも可能）
+          td.addEventListener("click", () => {
+            openAdminModal(u.staffId, u.name, dStr, shift);
+          });
+
+          tr.appendChild(td);
         });
 
-        alert(`職員「${name}（表記: ${displayName}）」を追加登録しました。`);
-        
-        // 入力欄のクリア
-        document.getElementById("new-staff-id").value = "";
-        document.getElementById("new-name").value = "";
-        document.getElementById("new-display-name").value = "";
-        document.getElementById("new-password").value = "";
+        tbody.appendChild(tr);
+      });
+    }
 
+    function openAdminModal(staffId, staffName, dateStr, shift) {
+      selectedStaffId = staffId;
+      selectedDateStr = dateStr;
+
+      document.getElementById("modal-staff-name").textContent = `職員: ${staffName}`;
+      document.getElementById("modal-date-info").textContent = `日付: ${dateStr}`;
+
+      if (shift) {
+        document.getElementById("shift-type").value = shift.type;
+        document.getElementById("shift-memo").value = shift.memo || "";
+        document.getElementById("btn-delete").style.display = "block";
+      } else {
+        document.getElementById("shift-type").value = "休み";
+        document.getElementById("shift-memo").value = "";
+        document.getElementById("btn-delete").style.display = "none";
+      }
+
+      document.getElementById("admin-modal").style.display = "flex";
+    }
+
+    // 保存処理
+    document.getElementById("btn-save").addEventListener("click", async () => {
+      const type = document.getElementById("shift-type").value;
+      const memo = document.getElementById("shift-memo").value;
+      const docId = `${selectedDateStr}_${selectedStaffId}`;
+
+      try {
+        await setDoc(doc(db, "shifts", docId), {
+          date: selectedDateStr,
+          staffId: selectedStaffId,
+          type: type,
+          memo: memo,
+          updatedByAdmin: true,
+          updatedAt: new Date()
+        });
+        document.getElementById("admin-modal").style.display = "none";
       } catch (e) {
-        if (e.code === "auth/email-already-in-use") {
-          alert("その職員IDは既に登録されています。");
-        } else {
-          alert("登録エラー: " + e.message);
-        }
+        alert("保存エラー: " + e.message);
       }
     });
 
-    // 職員一覧リアルタイム取得＆表示
-    function listenUsersList() {
-      onSnapshot(collection(db, "users"), (snapshot) => {
-        const tbody = document.getElementById("user-table-body");
-        tbody.innerHTML = "";
-
-        if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="4">登録されている職員はいません。</td></tr>';
-          return;
-        }
-
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const tr = document.createElement("tr");
-
-          const roleBadge = data.role === "admin" 
-            ? '<span style="color:#d9534f; font-weight:bold;">管理者</span>' 
-            : '一般職員';
-
-          const sId = data.staffId || docSnap.id;
-          const uName = data.name || "-";
-          const dName = data.displayName || data.name || "-";
-
-          tr.innerHTML = `
-            <td>${sId}</td>
-            <td>${uName}</td>
-            <td>${dName}</td>
-            <td>${roleBadge}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      });
-    }
-
-    // CSVダウンロード処理
-    document.getElementById("btn-download-csv").addEventListener("click", async () => {
-      const selectedIndex = document.getElementById("period-select").value;
-      const targetPeriod = periodList[selectedIndex];
+    // 削除処理
+    document.getElementById("btn-delete").addEventListener("click", async () => {
+      if (!confirm("この希望データを削除しますか？")) return;
+      const docId = `${selectedDateStr}_${selectedStaffId}`;
 
       try {
-        const snapshot = await getDocs(collection(db, "shifts"));
-        const shiftsData = {};
-
-        snapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          if (targetPeriod.dates.includes(data.date)) {
-            if (!shiftsData[data.date]) shiftsData[data.date] = [];
-            shiftsData[data.date].push(data);
-          }
-        });
-
-        let csvContent = "\uFEFF日付,職員ID,職員名,希望区分,備考\n";
-
-        targetPeriod.dates.forEach(dStr => {
-          const dayShifts = shiftsData[dStr] || [];
-          dayShifts.forEach(s => {
-            const name = usersNameMap[s.staffId] || s.staffId;
-            const memoEscaped = (s.memo || "").replace(/"/g, '""');
-            csvContent += `"${dStr}","${s.staffId}","${name}","${s.type}","${memoEscaped}"\n`;
-          });
-        });
-
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `shift_requests_${targetPeriod.startStr}_${targetPeriod.endStr}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
+        await deleteDoc(doc(db, "shifts", docId));
+        document.getElementById("admin-modal").style.display = "none";
       } catch (e) {
-        alert("CSVダウンロード失敗: " + e.message);
+        alert("削除エラー: " + e.message);
       }
+    });
+
+    document.getElementById("btn-cancel").addEventListener("click", () => {
+      document.getElementById("admin-modal").style.display = "none";
     });
   </script>
 </body>
