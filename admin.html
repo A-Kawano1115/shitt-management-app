@@ -66,7 +66,7 @@
       margin-bottom: 5px;
       font-size: 14px;
     }
-    select, input[type="text"] {
+    select, input[type="text"], input[type="password"] {
       width: 100%;
       max-width: 400px;
       padding: 8px 12px;
@@ -88,10 +88,37 @@
     }
     .btn-primary:hover { background: #218838; }
 
+    .btn-blue {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .btn-blue:hover { background: #0052a3; }
+
     .help-text {
       font-size: 12px;
       color: #6c757d;
       margin-top: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f1f3f5;
     }
   </style>
 </head>
@@ -106,8 +133,9 @@
     </div>
   </header>
 
+  <!-- 1. CSVダウンロード設定 -->
   <div class="card">
-    <h2>CSV出力設定</h2>
+    <h2 style="margin-top:0;">CSV出力設定</h2>
     <p style="font-size:14px; color:#555; margin-bottom: 20px;">
       指定した対象期間の全職員の希望データを集計し、Shift作成ソフト取り込み用のCSVファイルをダウンロードします。
     </p>
@@ -121,11 +149,61 @@
     <button id="btn-download-csv" class="btn-primary">CSVをダウンロード</button>
   </div>
 
+  <!-- 2. 職員登録フォーム -->
+  <div class="card">
+    <h2 style="margin-top:0;">職員（アカウント）新規登録</h2>
+    <p style="font-size:14px; color:#555; margin-bottom: 15px;">
+      システムにログインする職員を追加します。（職員IDは英数字で入力してください）
+    </p>
+
+    <div class="form-group">
+      <label for="new-staff-id">職員ID:</label>
+      <input type="text" id="new-staff-id" placeholder="例: staff01">
+    </div>
+
+    <div class="form-group">
+      <label for="new-display-name">職員氏名:</label>
+      <input type="text" id="new-display-name" placeholder="例: 山田 太郎">
+    </div>
+
+    <div class="form-group">
+      <label for="new-password">パスワード:</label>
+      <input type="password" id="new-password" placeholder="6文字以上">
+    </div>
+
+    <div class="form-group">
+      <label for="new-role">権限区分:</label>
+      <select id="new-role" style="max-width: 200px;">
+        <option value="user">一般職員</option>
+        <option value="admin">管理者</option>
+      </select>
+    </div>
+
+    <button id="btn-register-user" class="btn-blue">職員を登録する</button>
+  </div>
+
+  <!-- 3. 職員一覧表示 -->
+  <div class="card">
+    <h2 style="margin-top:0;">登録職員一覧</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>職員ID</th>
+          <th>氏名</th>
+          <th>権限</th>
+        </tr>
+      </thead>
+      <tbody id="user-table-body">
+        <tr><td colspan="3">読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-      getFirestore, collection, doc, getDoc, getDocs 
+      getFirestore, collection, doc, getDoc, getDocs, setDoc, onSnapshot 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
@@ -164,6 +242,7 @@
         document.getElementById("admin-display").textContent = `管理者: ${displayName}`;
 
         initAdminView();
+        listenUsersList();
       } else {
         window.location.href = "index.html";
       }
@@ -206,8 +285,6 @@
       const month = today.getMonth();
       const day = today.getDate();
 
-      // 当月20日までは「翌月16日〜（baseOffset=2）」
-      // 21日以降は「翌々月16日〜（baseOffset=3）」
       const baseOffset = (day > 20) ? 3 : 2;
       const labels = ["前期", "当期（締め対象）", "翌期", "翌々期"];
       const periods = [];
@@ -228,7 +305,7 @@
         }
 
         periods.push({
-          isDefault: (i === 0), // 当期をデフォルトフラグにする
+          isDefault: (i === 0),
           shortLabel: labels[i + 1],
           dates: dates,
           startStr: dates[0],
@@ -248,9 +325,83 @@
         opt.value = idx;
         opt.textContent = `[${p.shortLabel}] ${p.startStr} 〜 ${p.endStr}`;
         if (p.isDefault) {
-          opt.selected = true; // デフォルト設定（8月20日までは9/16〜期間）
+          opt.selected = true;
         }
         selectEl.appendChild(opt);
+      });
+    }
+
+    // 職員登録処理
+    document.getElementById("btn-register-user").addEventListener("click", async () => {
+      const staffId = document.getElementById("new-staff-id").value.trim();
+      const displayName = document.getElementById("new-display-name").value.trim();
+      const password = document.getElementById("new-password").value.trim();
+      const role = document.getElementById("new-role").value;
+
+      if (!staffId || !displayName || !password) {
+        alert("職員ID、氏名、パスワードを入力してください。");
+        return;
+      }
+      if (password.length < 6) {
+        alert("パスワードは6文字以上で設定してください。");
+        return;
+      }
+
+      const email = `${staffId}@shift.local`;
+
+      try {
+        // Firebase Authenticationにアカウント生成
+        await createUserWithEmailAndPassword(auth, email, password);
+
+        // Firestoreにユーザー詳細情報を保存
+        await setDoc(doc(db, "users", staffId), {
+          displayName: displayName,
+          role: role,
+          createdAt: new Date()
+        });
+
+        alert(`職員「${displayName}」を追加登録しました。`);
+        
+        // 入力欄のクリア
+        document.getElementById("new-staff-id").value = "";
+        document.getElementById("new-display-name").value = "";
+        document.getElementById("new-password").value = "";
+
+      } catch (e) {
+        if (e.code === "auth/email-already-in-use") {
+          alert("その職員IDは既に登録されています。");
+        } else {
+          alert("登録エラー: " + e.message);
+        }
+      }
+    });
+
+    // 職員一覧リアルタイム取得＆表示
+    function listenUsersList() {
+      onSnapshot(collection(db, "users"), (snapshot) => {
+        const tbody = document.getElementById("user-table-body");
+        tbody.innerHTML = "";
+
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="3">登録されている職員はいません。</td></tr>';
+          return;
+        }
+
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          const tr = document.createElement("tr");
+
+          const roleBadge = data.role === "admin" 
+            ? '<span style="color:#d9534f; font-weight:bold;">管理者</span>' 
+            : '一般職員';
+
+          tr.innerHTML = `
+            <td>${docSnap.id}</td>
+            <td>${data.displayName || "-"}</td>
+            <td>${roleBadge}</td>
+          `;
+          tbody.appendChild(tr);
+        });
       });
     }
 
@@ -263,7 +414,6 @@
         const snapshot = await getDocs(collection(db, "shifts"));
         const shiftsData = {};
 
-        // 取得データの絞り込み
         snapshot.forEach(docSnap => {
           const data = docSnap.data();
           if (targetPeriod.dates.includes(data.date)) {
@@ -272,7 +422,6 @@
           }
         });
 
-        // CSV文字列生成 (BOM付き UTF-8)
         let csvContent = "\uFEFF日付,職員ID,職員名,希望区分,備考\n";
 
         targetPeriod.dates.forEach(dStr => {
@@ -284,7 +433,6 @@
           });
         });
 
-        // Blobを作成してダウンロード実行
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
