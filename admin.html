@@ -57,6 +57,18 @@
       margin-bottom: 20px;
     }
 
+    /* 左右2カラムレイアウト */
+    .admin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .form-group {
       margin-bottom: 15px;
     }
@@ -68,7 +80,6 @@
     }
     select, input[type="text"], input[type="password"] {
       width: 100%;
-      max-width: 400px;
       padding: 8px 12px;
       border: 1px solid #ced4da;
       border-radius: 4px;
@@ -97,6 +108,7 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 14px;
+      width: 100%;
     }
     .btn-blue:hover { background: #0052a3; }
 
@@ -109,13 +121,13 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
+      margin-top: 10px;
     }
     th, td {
       border: 1px solid #dee2e6;
-      padding: 10px;
+      padding: 8px 10px;
       text-align: left;
-      font-size: 14px;
+      font-size: 13px;
     }
     th {
       background-color: #f1f3f5;
@@ -136,11 +148,11 @@
   <!-- 1. CSVダウンロード設定 -->
   <div class="card">
     <h2 style="margin-top:0;">CSV出力設定</h2>
-    <p style="font-size:14px; color:#555; margin-bottom: 20px;">
+    <p style="font-size:14px; color:#555; margin-bottom: 15px;">
       指定した対象期間の全職員の希望データを集計し、Shift作成ソフト取り込み用のCSVファイルをダウンロードします。
     </p>
 
-    <div class="form-group">
+    <div class="form-group" style="max-width: 400px;">
       <label for="period-select">出力対象期間:</label>
       <select id="period-select"></select>
       <div class="help-text">※初期状態では毎月の提出対象期間（20日締）が自動選択されています。</div>
@@ -149,54 +161,63 @@
     <button id="btn-download-csv" class="btn-primary">CSVをダウンロード</button>
   </div>
 
-  <!-- 2. 職員登録フォーム -->
-  <div class="card">
-    <h2 style="margin-top:0;">職員（アカウント）新規登録</h2>
-    <p style="font-size:14px; color:#555; margin-bottom: 15px;">
-      システムにログインする職員を追加します。（職員IDは英数字で入力してください）
-    </p>
+  <!-- 2. 職員管理エリア（左右2カラム） -->
+  <div class="admin-grid">
+    <!-- 左側: 職員登録フォーム -->
+    <div class="card">
+      <h2 style="margin-top:0;">職員新規登録</h2>
+      <p style="font-size:13px; color:#555; margin-bottom: 15px;">
+        システムにログインする職員を追加します。
+      </p>
 
-    <div class="form-group">
-      <label for="new-staff-id">職員ID:</label>
-      <input type="text" id="new-staff-id" placeholder="例: staff01">
+      <div class="form-group">
+        <label for="new-staff-id">職員ID (staffId):</label>
+        <input type="text" id="new-staff-id" placeholder="例: staff01">
+      </div>
+
+      <div class="form-group">
+        <label for="new-name">職員氏名 (name):</label>
+        <input type="text" id="new-name" placeholder="例: 山田 太郎">
+      </div>
+
+      <div class="form-group">
+        <label for="new-display-name">表記名 (displayName):</label>
+        <input type="text" id="new-display-name" placeholder="例: 山田（カレンダー等に表示）">
+      </div>
+
+      <div class="form-group">
+        <label for="new-password">パスワード:</label>
+        <input type="password" id="new-password" placeholder="6文字以上">
+      </div>
+
+      <div class="form-group">
+        <label for="new-role">権限区分 (role):</label>
+        <select id="new-role">
+          <option value="user">一般職員</option>
+          <option value="admin">管理者</option>
+        </select>
+      </div>
+
+      <button id="btn-register-user" class="btn-blue">職員を登録する</button>
     </div>
 
-    <div class="form-group">
-      <label for="new-display-name">職員氏名:</label>
-      <input type="text" id="new-display-name" placeholder="例: 山田 太郎">
+    <!-- 右側: 登録職員一覧 -->
+    <div class="card">
+      <h2 style="margin-top:0;">登録職員一覧</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>職員ID</th>
+            <th>職員氏名</th>
+            <th>表記名</th>
+            <th>権限</th>
+          </tr>
+        </thead>
+        <tbody id="user-table-body">
+          <tr><td colspan="4">読み込み中...</td></tr>
+        </tbody>
+      </table>
     </div>
-
-    <div class="form-group">
-      <label for="new-password">パスワード:</label>
-      <input type="password" id="new-password" placeholder="6文字以上">
-    </div>
-
-    <div class="form-group">
-      <label for="new-role">権限区分:</label>
-      <select id="new-role" style="max-width: 200px;">
-        <option value="user">一般職員</option>
-        <option value="admin">管理者</option>
-      </select>
-    </div>
-
-    <button id="btn-register-user" class="btn-blue">職員を登録する</button>
-  </div>
-
-  <!-- 3. 職員一覧表示 -->
-  <div class="card">
-    <h2 style="margin-top:0;">登録職員一覧</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>職員ID</th>
-          <th>氏名</th>
-          <th>権限</th>
-        </tr>
-      </thead>
-      <tbody id="user-table-body">
-        <tr><td colspan="3">読み込み中...</td></tr>
-      </tbody>
-    </table>
   </div>
 
   <script type="module">
@@ -238,8 +259,8 @@
         }
 
         await loadUsersNameMap();
-        const displayName = usersNameMap[currentAdminId] || currentAdminId;
-        document.getElementById("admin-display").textContent = `管理者: ${displayName}`;
+        const headerName = usersNameMap[currentAdminId] || currentAdminId;
+        document.getElementById("admin-display").textContent = `管理者: ${headerName}`;
 
         initAdminView();
         listenUsersList();
@@ -250,7 +271,7 @@
 
     async function checkAdminRole(staffId) {
       try {
-        const userDoc = await getDoc(doc(db, "users", staffId));
+        const userDoc = await getDoc(doc(docRefUsers(staffId)));
         return userDoc.exists() && userDoc.data().role === "admin";
       } catch (e) {
         console.error("権限確認エラー:", e);
@@ -258,12 +279,17 @@
       }
     }
 
+    function docRefUsers(staffId) {
+      return doc(db, "users", staffId);
+    }
+
     async function loadUsersNameMap() {
       try {
         const snap = await getDocs(collection(db, "users"));
         snap.forEach(docSnap => {
           const data = docSnap.data();
-          usersNameMap[docSnap.id] = data.displayName || docSnap.id;
+          // 表記名(displayName)があればそれを、無ければ氏名(name)やIDを使用
+          usersNameMap[docSnap.id] = data.displayName || data.name || docSnap.id;
         });
       } catch (e) {
         console.warn("ユーザー情報取得失敗", e);
@@ -334,12 +360,14 @@
     // 職員登録処理
     document.getElementById("btn-register-user").addEventListener("click", async () => {
       const staffId = document.getElementById("new-staff-id").value.trim();
-      const displayName = document.getElementById("new-display-name").value.trim();
+      const name = document.getElementById("new-name").value.trim();
+      const displayNameInput = document.getElementById("new-display-name").value.trim();
+      const displayName = displayNameInput || name; // 未入力の場合は氏名を補完
       const password = document.getElementById("new-password").value.trim();
       const role = document.getElementById("new-role").value;
 
-      if (!staffId || !displayName || !password) {
-        alert("職員ID、氏名、パスワードを入力してください。");
+      if (!staffId || !name || !password) {
+        alert("職員ID、職員氏名、パスワードを入力してください。");
         return;
       }
       if (password.length < 6) {
@@ -353,17 +381,20 @@
         // Firebase Authenticationにアカウント生成
         await createUserWithEmailAndPassword(auth, email, password);
 
-        // Firestoreにユーザー詳細情報を保存
+        // Firestoreに指定された4項目 (staffId, name, displayName, role) をセット
         await setDoc(doc(db, "users", staffId), {
+          staffId: staffId,
+          name: name,
           displayName: displayName,
           role: role,
           createdAt: new Date()
         });
 
-        alert(`職員「${displayName}」を追加登録しました。`);
+        alert(`職員「${name}（表記: ${displayName}）」を追加登録しました。`);
         
         // 入力欄のクリア
         document.getElementById("new-staff-id").value = "";
+        document.getElementById("new-name").value = "";
         document.getElementById("new-display-name").value = "";
         document.getElementById("new-password").value = "";
 
@@ -383,7 +414,7 @@
         tbody.innerHTML = "";
 
         if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="3">登録されている職員はいません。</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="4">登録されている職員はいません。</td></tr>';
           return;
         }
 
@@ -395,9 +426,14 @@
             ? '<span style="color:#d9534f; font-weight:bold;">管理者</span>' 
             : '一般職員';
 
+          const sId = data.staffId || docSnap.id;
+          const uName = data.name || "-";
+          const dName = data.displayName || data.name || "-";
+
           tr.innerHTML = `
-            <td>${docSnap.id}</td>
-            <td>${data.displayName || "-"}</td>
+            <td>${sId}</td>
+            <td>${uName}</td>
+            <td>${dName}</td>
             <td>${roleBadge}</td>
           `;
           tbody.appendChild(tr);
