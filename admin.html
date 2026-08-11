@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>勤務希望管理 - 職員・システム管理</title>
+  <title>管理者画面 - 勤務希望管理</title>
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
       padding: 15px;
       background-color: #f8f9fa;
       color: #333;
@@ -17,30 +18,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #1e293b;
+      background: #343a40;
       color: white;
-      padding: 12px 20px;
+      padding: 10px 20px;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .header-title { font-size: 18px; font-weight: bold; }
     .header-actions { display: flex; align-items: center; gap: 10px; }
     
-    .btn-nav {
-      background: #3b82f6;
+    .btn-userpage {
+      background: #17a2b8;
       color: white;
       border: none;
       padding: 6px 12px;
       border-radius: 4px;
       cursor: pointer;
-      text-decoration: none;
       font-size: 13px;
-      font-weight: bold;
     }
-    .btn-nav:hover { background: #2563eb; }
+    .btn-userpage:hover { background: #138496; }
 
     .btn-logout {
-      background: #ef4444;
+      background: #dc3545;
       color: white;
       border: none;
       padding: 6px 12px;
@@ -48,16 +47,7 @@
       cursor: pointer;
       font-size: 13px;
     }
-    .btn-logout:hover { background: #dc2626; }
-
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .container { grid-template-columns: 1fr; }
-    }
+    .btn-logout:hover { background: #bd2130; }
 
     .card {
       background: white;
@@ -66,183 +56,79 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       margin-bottom: 20px;
     }
-    .card-title {
-      font-size: 16px;
-      font-weight: bold;
+
+    .form-group {
       margin-bottom: 15px;
-      color: #0f172a;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
-
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-    .form-control {
-      width: 100%;
-      padding: 8px 10px;
-      font-size: 14px;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-    }
-
-    .btn-submit {
-      width: 100%;
-      background: #10b981;
-      color: white;
-      border: none;
-      padding: 10px;
+    label {
+      display: block;
       font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
+      margin-bottom: 5px;
       font-size: 14px;
     }
-    .btn-submit:hover { background: #059669; }
-    .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; }
+    select, input[type="text"] {
+      width: 100%;
+      max-width: 400px;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
 
-    .btn-csv {
-      background: #10b981;
+    .btn-primary {
+      background: #28a745;
       color: white;
       border: none;
-      padding: 8px 16px;
+      padding: 10px 20px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 13px;
       font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-csv:hover { background: #059669; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
       font-size: 14px;
     }
-    th, td {
-      border: 1px solid #e2e8f0;
-      padding: 10px;
-      text-align: left;
-    }
-    th { background: #f1f5f9; font-weight: bold; }
+    .btn-primary:hover { background: #218838; }
 
-    .role-badge {
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-    .role-admin { background: #dbeafe; color: #1e40af; }
-    .role-staff { background: #f3f4f6; color: #374151; }
-
-    .btn-del-sm {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
+    .help-text {
       font-size: 12px;
-    }
-    .btn-del-sm:hover { background: #dc2626; }
-
-    .csv-controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
+      color: #6c757d;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="header-title">勤務希望管理システム【管理者専用】</div>
+    <div class="header-title">管理者専用パネル</div>
     <div class="header-actions">
-      <!-- カレンダー画面へ戻るボタン -->
-      <a href="app.html" class="btn-nav">◀ カレンダー画面へ</a>
+      <span id="admin-display" style="font-size:14px;">---</span>
+      <button id="btn-userpage" class="btn-userpage">カレンダー画面へ</button>
       <button id="btn-logout" class="btn-logout">ログアウト</button>
     </div>
   </header>
 
-  <div class="container">
-    <!-- 左側: 職員追加フォーム -->
-    <div>
-      <div class="card">
-        <div class="card-title">新規職員アカウント作成</div>
-        <form id="add-staff-form">
-          <div class="form-group">
-            <label for="staff-id">スタッフID (例: 1003)</label>
-            <input type="text" id="staff-id" class="form-control" required placeholder="半角英数字">
-          </div>
-          <div class="form-group">
-            <label for="staff-name">氏名 (例: 山田 太郎)</label>
-            <input type="text" id="staff-name" class="form-control" required placeholder="フルネーム">
-          </div>
-          <div class="form-group">
-            <label for="display-name">表示名 (例: 山田)</label>
-            <input type="text" id="display-name" class="form-control" required placeholder="カレンダーで表示する名前">
-          </div>
-          <div class="form-group">
-            <label for="password">初期パスワード</label>
-            <input type="password" id="password" class="form-control" required minlength="6" placeholder="6文字以上">
-          </div>
-          <div class="form-group">
-            <label for="role">権限</label>
-            <select id="role" class="form-control">
-              <option value="staff">一般スタッフ</option>
-              <option value="admin">管理者</option>
-            </select>
-          </div>
-          <button type="submit" id="btn-create" class="btn-submit">登録実行</button>
-        </form>
-      </div>
+  <div class="card">
+    <h2>CSV出力設定</h2>
+    <p style="font-size:14px; color:#555; margin-bottom: 20px;">
+      指定した対象期間の全職員の希望データを集計し、Shift作成ソフト取り込み用のCSVファイルをダウンロードします。
+    </p>
+
+    <div class="form-group">
+      <label for="period-select">出力対象期間:</label>
+      <select id="period-select"></select>
+      <div class="help-text">※初期状態では毎月の提出対象期間（20日締）が自動選択されています。</div>
     </div>
 
-    <!-- 右側: CSVエクスポート & 職員一覧 -->
-    <div>
-      <!-- CSV出力カード -->
-      <div class="card">
-        <div class="card-title">
-          <span>勤務希望CSV出力</span>
-        </div>
-        <div class="csv-controls">
-          <select id="csv-period-select" class="form-control" style="max-width: 280px;"></select>
-          <button id="btn-export-csv" class="btn-csv">📥 CSV出力 (ダウンロード)</button>
-        </div>
-      </div>
-
-      <!-- 職員一覧表示カード -->
-      <div class="card">
-        <div class="card-title">登録済み職員一覧</div>
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>氏名</th>
-              <th>表示名</th>
-              <th>権限</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="staff-table-body">
-            <tr><td colspan="5" style="text-align: center; padding: 20px;">読み込み中...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <button id="btn-download-csv" class="btn-primary">CSVをダウンロード</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getFirestore, collection, doc, getDoc, getDocs 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // ↓↓↓ ここにご自身の firebaseConfig を貼り付けてください ↓↓↓
+    // ↓↓ ご自身の Firebase 設定コードを貼り付けてください ↓↓
     const firebaseConfig = {
       apiKey: "AIzaSyBRC4LFi5zqFTtDZtrsAEFSs99F1nlnPYA",
       authDomain: "shift-app-2026-ddb1a.firebaseapp.com",
@@ -251,319 +137,167 @@
       messagingSenderId: "645356176933",
       appId: "1:645356176933:web:2a01952e35d9382d4961cc"
     };
-    // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+    // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentUserId = "";
+    let currentAdminId = "";
+    let periodList = [];
+    let usersNameMap = {}; // { staffId: displayName }
 
-    // 認証状態と管理者権限の検証
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentUserId = user.email.replace("@shift.local", "");
+        currentAdminId = user.email.replace("@shift.local", "");
         
-        try {
-          // Firestoreから管理者かどうかのチェック
-          const userDoc = await getDoc(doc(db, "users", currentUserId));
-          if (!userDoc.exists() || userDoc.data().role !== "admin") {
-            alert("管理者権限がありません。カレンダー画面へ戻ります。");
-            window.location.href = "app.html";
-            return;
-          }
-
-          // 権限確認OKなら初期化処理を開始
-          listenStaffList();
-          setupPeriodSelect();
-        } catch (error) {
-          console.error("権限チェックエラー:", error);
+        // 管理者権限チェック
+        const isAdmin = await checkAdminRole(currentAdminId);
+        if (!isAdmin) {
+          alert("管理者権限がありません。");
+          window.location.href = "app.html";
+          return;
         }
+
+        await loadUsersNameMap();
+        const displayName = usersNameMap[currentAdminId] || currentAdminId;
+        document.getElementById("admin-display").textContent = `管理者: ${displayName}`;
+
+        initAdminView();
       } else {
-        // 未ログイン時はログイン画面へ
         window.location.href = "index.html";
       }
     });
 
-    // ログアウト処理
+    async function checkAdminRole(staffId) {
+      try {
+        const userDoc = await getDoc(doc(db, "users", staffId));
+        return userDoc.exists() && userDoc.data().role === "admin";
+      } catch (e) {
+        console.error("権限確認エラー:", e);
+        return false;
+      }
+    }
+
+    async function loadUsersNameMap() {
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          usersNameMap[docSnap.id] = data.displayName || docSnap.id;
+        });
+      } catch (e) {
+        console.warn("ユーザー情報取得失敗", e);
+      }
+    }
+
+    document.getElementById("btn-userpage").addEventListener("click", () => {
+      window.location.href = "app.html";
+    });
+
     document.getElementById("btn-logout").addEventListener("click", () => {
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
-    // -------------------------------------------------------------
-    // CSV出力機能（16日〜翌月15日区切り）
-    // -------------------------------------------------------------
-    
-    // 16日始まりの期間リストを生成してドロップダウンにセット
-    function setupPeriodSelect() {
-      const select = document.getElementById("csv-period-select");
-      select.innerHTML = "";
-
+    // 期間リストの生成（当期を初期選択に自動設定）
+    function generatePeriodOptions() {
       const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+      const day = today.getDate();
+
+      // 当月20日までは「翌月16日〜（baseOffset=2）」
+      // 21日以降は「翌々月16日〜（baseOffset=3）」
+      const baseOffset = (day > 20) ? 3 : 2;
+      const labels = ["前期", "当期（締め対象）", "翌期", "翌々期"];
       const periods = [];
 
-      // 前月・当月・次月・次々月の4期間を生成
-      for (let offset = -1; offset <= 2; offset++) {
-        let baseDate = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-        
-        // 16日始まり〜翌月15日終わりの日付計算
-        let startDate, endDate;
-        if (today.getDate() >= 16) {
-          startDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 16);
-          endDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 15);
-        } else {
-          startDate = new Date(baseDate.getFullYear(), baseDate.getMonth() - 1, 16);
-          endDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 15);
+      for (let i = -1; i <= 2; i++) {
+        const offset = baseOffset + i;
+        const startDate = new Date(year, month + offset - 1, 16);
+        const endDate = new Date(year, month + offset, 15);
+
+        const dates = [];
+        let curr = new Date(startDate);
+        while (curr <= endDate) {
+          const y = curr.getFullYear();
+          const m = String(curr.getMonth() + 1).padStart(2, '0');
+          const d = String(curr.getDate()).padStart(2, '0');
+          dates.push(`${y}-${m}-${d}`);
+          curr.setDate(curr.getDate() + 1);
         }
 
-        const formatShort = (d) => `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-        const formatKey = (d) => {
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}`;
-        };
-
         periods.push({
-          label: `${formatShort(startDate)} 〜 ${formatShort(endDate)}`,
-          startStr: formatKey(startDate),
-          endStr: formatKey(endDate)
+          isDefault: (i === 0), // 当期をデフォルトフラグにする
+          shortLabel: labels[i + 1],
+          dates: dates,
+          startStr: dates[0],
+          endStr: dates[dates.length - 1]
         });
       }
+      return periods;
+    }
 
-      periods.forEach((p, idx) => {
+    function initAdminView() {
+      periodList = generatePeriodOptions();
+      const selectEl = document.getElementById("period-select");
+      selectEl.innerHTML = "";
+
+      periodList.forEach((p, idx) => {
         const opt = document.createElement("option");
-        opt.value = `${p.startStr}_${p.endStr}`;
-        opt.textContent = p.label;
-        if (idx === 1) opt.selected = true; // デフォルトで当期を選択
-        select.appendChild(opt);
+        opt.value = idx;
+        opt.textContent = `[${p.shortLabel}] ${p.startStr} 〜 ${p.endStr}`;
+        if (p.isDefault) {
+          opt.selected = true; // デフォルト設定（8月20日までは9/16〜期間）
+        }
+        selectEl.appendChild(opt);
       });
     }
 
-    // 日付範囲（YYYY-MM-DDの配列）を作成するユーティリティ
-    function generateDateRange(startStr, endStr) {
-      const list = [];
-      let curr = new Date(startStr);
-      const end = new Date(endStr);
-
-      while (curr <= end) {
-        const y = curr.getFullYear();
-        const m = String(curr.getMonth() + 1).padStart(2, '0');
-        const d = String(curr.getDate()).padStart(2, '0');
-        list.push(`${y}-${m}-${d}`);
-        curr.setDate(curr.getDate() + 1);
-      }
-      return list;
-    }
-
-    // CSVセルエスケープ処理関数
-    function escapeCsvCell(val) {
-      if (val === null || val === undefined) return '""';
-      const str = String(val);
-      if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return `"${str}"`;
-    }
-
-    // CSV生成およびダウンロード実行処理
-    document.getElementById("btn-export-csv").addEventListener("click", async () => {
-      const selectedValue = document.getElementById("csv-period-select").value;
-      if (!selectedValue) {
-        alert("期間が選択されていません。");
-        return;
-      }
-
-      const [startStr, endStr] = selectedValue.split("_");
-      const dateList = generateDateRange(startStr, endStr);
+    // CSVダウンロード処理
+    document.getElementById("btn-download-csv").addEventListener("click", async () => {
+      const selectedIndex = document.getElementById("period-select").value;
+      const targetPeriod = periodList[selectedIndex];
 
       try {
-        // 1. 職員一覧の取得（ID順昇順）
-        const usersSnap = await getDocs(collection(db, "users"));
-        const usersList = [];
-        usersSnap.forEach(docSnap => {
+        const snapshot = await getDocs(collection(db, "shifts"));
+        const shiftsData = {};
+
+        // 取得データの絞り込み
+        snapshot.forEach(docSnap => {
           const data = docSnap.data();
-          usersList.push({
-            id: docSnap.id,
-            displayName: data.displayName || data.name || docSnap.id
-          });
-        });
-
-        // スタッフID（数値・文字列）昇順でソート
-        usersList.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
-
-        if (usersList.length === 0) {
-          alert("登録されている職員が存在しません。");
-          return;
-        }
-
-        // 2. 選択期間のシフト希望データをFirestoreから全件取得
-        // （shifts コレクションに { staffId, date, type, memo } で保存されている前提）
-        const shiftsSnap = await getDocs(collection(db, "shifts"));
-        const shiftsData = {}; // key: "staffId_YYYY-MM-DD" -> { type, memo }
-
-        shiftsSnap.forEach(docSnap => {
-          const data = docSnap.data();
-          if (data.staffId && data.date) {
-            shiftsData[`${data.staffId}_${data.date}`] = data;
+          if (targetPeriod.dates.includes(data.date)) {
+            if (!shiftsData[data.date]) shiftsData[data.date] = [];
+            shiftsData[data.date].push(data);
           }
         });
 
-        // 3. ヘッダー行作成 ["ID", "氏名", "09/16", "09/17", ...]
-        const headerRow = ["ID", "氏名"];
-        dateList.forEach(dStr => {
-          const [, m, d] = dStr.split("-");
-          headerRow.push(`${m}/${d}`);
-        });
+        // CSV文字列生成 (BOM付き UTF-8)
+        let csvContent = "\uFEFF日付,職員ID,職員名,希望区分,備考\n";
 
-        const csvRows = [];
-        csvRows.push(headerRow.map(escapeCsvCell).join(","));
-
-        // 4. 各職員の行データ生成（縦にID順、横に日付順）
-        usersList.forEach(user => {
-          const row = [user.id, user.displayName];
-
-          dateList.forEach(dStr => {
-            const shift = shiftsData[`${user.id}_${dStr}`];
-            if (shift) {
-              let cellText = "";
-              if (shift.type === "その他（備考欄）") {
-                cellText = shift.memo || "その他";
-              } else {
-                cellText = shift.type || "";
-                if (shift.memo) {
-                  cellText += ` (${shift.memo})`;
-                }
-              }
-              row.push(cellText);
-            } else {
-              row.push(""); // 希望登録がない場合は空文字
-            }
+        targetPeriod.dates.forEach(dStr => {
+          const dayShifts = shiftsData[dStr] || [];
+          dayShifts.forEach(s => {
+            const name = usersNameMap[s.staffId] || s.staffId;
+            const memoEscaped = (s.memo || "").replace(/"/g, '""');
+            csvContent += `"${dStr}","${s.staffId}","${name}","${s.type}","${memoEscaped}"\n`;
           });
-
-          csvRows.push(row.map(escapeCsvCell).join(","));
         });
 
-        // 5. BOM付きUTF-8としてCSVを出力
-        const csvContent = csvRows.join("\r\n");
-        const bom = new Uint8Array([0xEF, 0xBB, 0xBF]); // Excelでの日本語文字化けを防止するBOM
-        const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
-
-        const fileName = `shift_requests_${startStr.replace(/-/g,"")}_${endStr.replace(/-/g,"")}.csv`;
-
-        const link = document.createElement("a");
+        // Blobを作成してダウンロード実行
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", fileName);
-        link.style.visibility = "hidden";
+        link.setAttribute("download", `shift_requests_${targetPeriod.startStr}_${targetPeriod.endStr}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-      } catch (error) {
-        console.error("CSV出力エラー:", error);
-        alert("CSVの出力中にエラーが発生しました: " + error.message);
-      }
-    });
-
-    // -------------------------------------------------------------
-    // 職員アカウント追加処理
-    // -------------------------------------------------------------
-    document.getElementById("add-staff-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const staffId = document.getElementById("staff-id").value.trim();
-      const name = document.getElementById("staff-name").value.trim();
-      const displayName = document.getElementById("display-name").value.trim();
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
-      const btn = document.getElementById("btn-create");
-
-      btn.disabled = true;
-      btn.textContent = "登録中...";
-
-      try {
-        // 現在の管理者ログインセッションを切らないよう、別インスタンスで作成
-        const tempApp = initializeApp(firebaseConfig, "SecondaryApp");
-        const tempAuth = getAuth(tempApp);
-        
-        const email = `${staffId}@shift.local`;
-        const cred = await createUserWithEmailAndPassword(tempAuth, email, password);
-
-        // Firestore の users コレクションに保存
-        await setDoc(doc(db, "users", staffId), {
-          uid: cred.user.uid,
-          staffId: staffId,
-          name: name,
-          displayName: displayName,
-          role: role,
-          createdAt: new Date()
-        });
-
-        alert(`職員「${displayName} (${staffId})」のアカウントを作成しました！`);
-        document.getElementById("add-staff-form").reset();
-      } catch (error) {
-        console.error("登録エラー:", error);
-        alert("登録に失敗しました: " + error.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "登録実行";
-      }
-    });
-
-    // -------------------------------------------------------------
-    // 職員一覧のリアルタイム反映処理
-    // -------------------------------------------------------------
-    function listenStaffList() {
-      onSnapshot(collection(db, "users"), (snapshot) => {
-        const tbody = document.getElementById("staff-table-body");
-        tbody.innerHTML = "";
-
-        if (snapshot.empty) {
-          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px;">登録されている職員はいません</td></tr>';
-          return;
-        }
-
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const tr = document.createElement("tr");
-
-          const roleClass = data.role === "admin" ? "role-admin" : "role-staff";
-          const roleLabel = data.role === "admin" ? "管理者" : "一般";
-
-          tr.innerHTML = `
-            <td><strong>${data.staffId}</strong></td>
-            <td>${data.name || "-"}</td>
-            <td>${data.displayName || data.name || "-"}</td>
-            <td><span class="role-badge ${roleClass}">${roleLabel}</span></td>
-            <td>
-              <button class="btn-del-sm" onclick="deleteStaff('${data.staffId}')">削除</button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      });
-    }
-
-    // 職員削除処理
-    window.deleteStaff = async function(targetStaffId) {
-      if (targetStaffId === currentUserId) {
-        alert("現在ログイン中の自分自身のアカウントは削除できません。");
-        return;
-      }
-
-      if (!confirm(`スタッフID: ${targetStaffId} の職員データをFirestoreから削除しますか？\n(※Firestoreから削除されます。)`)) {
-        return;
-      }
-
-      try {
-        await deleteDoc(doc(db, "users", targetStaffId));
-        alert("Firestoreから職員データを削除しました。");
       } catch (e) {
-        console.error("削除エラー:", error);
-        alert("削除に失敗しました: " + e.message);
+        alert("CSVダウンロード失敗: " + e.message);
       }
-    };
+    });
   </script>
 </body>
 </html>
