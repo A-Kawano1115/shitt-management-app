@@ -388,14 +388,17 @@
       return !!holidayMap[dateStr];
     }
 
+    // 4期間の算出処理（20日締めのルールに基づく）
     function generate4Periods() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth();
       const day = today.getDate();
 
+      // 毎月20日までは「翌月16日〜翌々月15日」を当期(offset=2)とする
+      // 21日以降は「翌々月16日〜その翌月15日」を当期(offset=3)とする
       const baseOffset = (day > 20) ? 3 : 2;
-      const labels = ["過去1期間", "当期", "未来1期間", "未来2期間"];
+      const labels = ["前期", "当期", "翌期", "翌々期"];
       const periods = [];
 
       for (let i = -1; i <= 2; i++) {
@@ -427,7 +430,7 @@
     function initAppView() {
       periodList = generate4Periods();
       renderPeriodTabs();
-      switchPeriod(1);
+      switchPeriod(1); // 初期表示は「当期」
 
       // 全職員の希望データをリアルタイム監視
       onSnapshot(collection(db, "shifts"), (snapshot) => {
