@@ -327,13 +327,22 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentStaffId = user.email.replace("@shift.local", "");
+        const loginLoginPrefix = user.email ? user.email.replace("@shift.local", "") : "";
         
         await loadUsersNameMap();
-        const displayName = usersNameMap[currentStaffId] || currentStaffId;
+        
+        // ユーザー情報を確定（UID、ログインID、staffIdのどれかが一致するデータを検索）
+        const userInfo = await resolveUserInfo(user.uid, loginLoginPrefix);
+        currentStaffId = userInfo.staffId;
+
+        const displayName = userInfo.displayName || usersNameMap[currentStaffId] || currentStaffId;
         document.getElementById("user-display").textContent = `ログイン中: ${displayName}`;
         
-        await checkAdminRole(currentStaffId);
+        // 取得した権限情報を元にチェック
+        if (userInfo.role && String(userInfo.role).trim().toLowerCase() === "admin") {
+          showAdminButton();
+        }
+
         await fetchHolidays();
         initAppView();
       } else {
@@ -347,7 +356,6 @@
         const snap = await getDocs(collection(db, "users"));
         snap.forEach(docSnap => {
           const data = docSnap.data();
-          // ドキュメント内の staffId が定義されているか fallback して記録
           const sId = data.staffId || docSnap.id;
           usersNameMap[sId] = data.displayName || data.name || sId;
         });
@@ -356,45 +364,63 @@
       }
     }
 
-    // 管理者権限チェック（確実に表示させる修正版）
-    async function checkAdminRole(staffId) {
+    // Auth情報からFirestoreのユーザー情報を柔軟に検索・特定する関数
+    async function resolveUserInfo(uid, loginPrefix) {
+      let foundData = null;
+
       try {
-        let role = null;
+        // 1. ドキュメントID = uid で直接取得を試みる
+        let uDoc = await getDoc(doc(db, "users", uid));
+        if (uDoc.exists()) {
+          foundData = uDoc.data();
+        }
 
-        // 1. まずドキュメントID = staffId で直接取得を試みる
-        const userDocRef = doc(db, "users", staffId);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
-          role = userDoc.data().role;
-        } else {
-          // 2. ドキュメントIDが UID 等で異なる場合、staffId フィールドでクエリ検索する
-          const q = query(collection(db, "users"), where("staffId", "==", staffId));
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            role = querySnapshot.docs[0].data().role;
+        // 2. 見つからない場合、ドキュメントID = loginPrefix（例: 1002）で試みる
+        if (!foundData && loginPrefix) {
+          uDoc = await getDoc(doc(db, "users", loginPrefix));
+          if (uDoc.exists()) {
+            foundData = uDoc.data();
           }
         }
 
-        console.log(`[権限チェック] staffId: ${staffId}, 取得したrole: ${role}`);
-
-        if (role && String(role).trim().toLowerCase() === "admin") {
-          const btnAdmin = document.getElementById("btn-admin");
-          if (btnAdmin) {
-            // !important を付与してCSS上書きを確実に防ぎ表示させる
-            btnAdmin.style.setProperty("display", "inline-block", "important");
-            btnAdmin.onclick = () => {
-              window.location.href = "admin.html";
-            };
-            console.log("-> 管理者ボタンを表示しました。");
-          } else {
-            console.error("DOM内に #btn-admin が見つかりませんでした。");
+        // 3. それでも見つからない場合、staffId フィールドが loginPrefix と一致するものをクエリ
+        if (!foundData && loginPrefix) {
+          const q = query(collection(db, "users"), where("staffId", "==", loginPrefix));
+          const qSnap = await getDocs(q);
+          if (!qSnap.empty) {
+            foundData = qSnap.docs[0].data();
           }
-        } else {
-          console.warn("管理者権限が確認できませんでした:", role);
         }
       } catch (e) {
-        console.error("権限確認エラー:", e);
+        console.error("ユーザーデータ取得エラー:", e);
+      }
+
+      if (foundData) {
+        console.log("[ユーザー特定成功]", foundData);
+        return {
+          staffId: foundData.staffId || loginPrefix,
+          displayName: foundData.displayName || foundData.name,
+          role: foundData.role
+        };
+      }
+
+      console.warn("[ユーザー特定失敗] フォールバック値を使用します:", loginPrefix);
+      return {
+        staffId: loginPrefix,
+        displayName: loginPrefix,
+        role: null
+      };
+    }
+
+    // 管理者ボタン表示処理
+    function showAdminButton() {
+      const btnAdmin = document.getElementById("btn-admin");
+      if (btnAdmin) {
+        btnAdmin.style.setProperty("display", "inline-block", "important");
+        btnAdmin.onclick = () => {
+          window.location.href = "admin.html";
+        };
+        console.log("-> 管理者ボタンを表示しました。");
       }
     }
 
@@ -424,8 +450,6 @@
       const month = today.getMonth();
       const day = today.getDate();
 
-      // 毎月20日までは「翌月16日〜翌々月15日」を当期(offset=2)とする
-      // 21日以降は「翌々月16日〜その翌月15日」を当期(offset=3)とする
       const baseOffset = (day > 20) ? 3 : 2;
       const labels = ["前期", "当期", "翌期", "翌々期"];
       const periods = [];
