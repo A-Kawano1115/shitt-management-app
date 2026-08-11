@@ -36,7 +36,7 @@
       cursor: pointer;
       font-size: 13px;
       font-weight: bold;
-      display: none;
+      display: none; /* 初期状態は非表示 */
     }
     .btn-admin:hover { background: #e0a800; }
 
@@ -356,7 +356,7 @@
       }
     }
 
-    // 管理者権限チェック（ID一致・フィールド一致・大文字小文字対応）
+    // 管理者権限チェック（確実に表示させる修正版）
     async function checkAdminRole(staffId) {
       try {
         let role = null;
@@ -380,10 +380,16 @@
 
         if (role && String(role).trim().toLowerCase() === "admin") {
           const btnAdmin = document.getElementById("btn-admin");
-          btnAdmin.style.display = "inline-block";
-          btnAdmin.addEventListener("click", () => {
-            window.location.href = "admin.html";
-          });
+          if (btnAdmin) {
+            // !important を付与してCSS上書きを確実に防ぎ表示させる
+            btnAdmin.style.setProperty("display", "inline-block", "important");
+            btnAdmin.onclick = () => {
+              window.location.href = "admin.html";
+            };
+            console.log("-> 管理者ボタンを表示しました。");
+          } else {
+            console.error("DOM内に #btn-admin が見つかりませんでした。");
+          }
         } else {
           console.warn("管理者権限が確認できませんでした:", role);
         }
