@@ -56,6 +56,17 @@
       margin-bottom: 20px;
     }
 
+    .card-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #212529;
+      padding-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     .period-toolbar {
       display: flex;
       justify-content: space-between;
@@ -133,6 +144,29 @@
     .shift-off { background-color: #f8d7da; color: #721c24; font-weight: bold; }
     .shift-work { background-color: #d1ecf1; color: #0c5460; }
     
+    /* 職員管理用スタイル */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .form-group input, .form-group select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
     .modal {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 10000;
@@ -142,9 +176,12 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
-    .btn-primary { background: #212529; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-danger { background: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .btn-secondary { background: #6c757d; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
+    .btn-primary { background: #212529; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-primary:hover { background: #000; }
+    .btn-danger { background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn-danger:hover { background: #bd2130; }
+    .btn-secondary { background: #6c757d; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+    .btn-sm-danger { background: #dc3545; color: white; border: none; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
   </style>
 </head>
 <body>
@@ -158,7 +195,64 @@
     </div>
   </header>
 
+  <!-- 1. 職員マスター登録・管理カード -->
   <div class="card">
+    <div class="card-title">
+      <span>👥 職員アカウント登録・管理</span>
+      <button id="toggle-user-form-btn" class="btn-secondary" style="font-size:12px; padding:4px 8px;">フォームを開く/閉じる</button>
+    </div>
+
+    <!-- 登録フォーム -->
+    <div id="user-form-container">
+      <form id="add-user-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="new-staff-id">職員ID (例: 1001)</label>
+            <input type="text" id="new-staff-id" placeholder="半角英数字" required>
+          </div>
+          <div class="form-group">
+            <label for="new-display-name">職員氏名</label>
+            <input type="text" id="new-display-name" placeholder="山田 太郎" required>
+          </div>
+          <div class="form-group">
+            <label for="new-role">権限</label>
+            <select id="new-role">
+              <option value="staff">一般職員 (staff)</option>
+              <option value="admin">管理者 (admin)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="new-password">初期パスワード</label>
+            <input type="text" id="new-password" placeholder="6文字以上" required value="123456">
+          </div>
+        </div>
+        <div style="text-align: right; margin-bottom: 15px;">
+          <button type="submit" class="btn-primary">＋ 職員を新規登録</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 登録済み職員一覧テーブル -->
+    <div class="table-container" style="max-height: 200px; overflow-y: auto;">
+      <table style="text-align: left;">
+        <thead>
+          <tr>
+            <th style="width: 100px;">職員ID</th>
+            <th>氏名</th>
+            <th style="width: 100px;">権限</th>
+            <th style="width: 80px; text-align: center;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="user-list-body">
+          <tr><td colspan="4" style="text-align:center;">読み込み中...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. 全体勤務希望一覧カード -->
+  <div class="card">
+    <div class="card-title">📅 全職員の勤務希望一覧</div>
     <div class="period-toolbar">
       <div id="period-tabs" class="period-tabs"></div>
       <div id="period-display" style="font-weight:bold; color:#212529;">対象期間: 取得中...</div>
@@ -172,7 +266,7 @@
     </div>
   </div>
 
-  <!-- 管理者用 編集モーダル -->
+  <!-- 管理者用 希望編集モーダル -->
   <div id="admin-modal" class="modal">
     <div class="modal-content">
       <h3>【管理者】希望データの編集</h3>
@@ -221,7 +315,9 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
       getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc, onSnapshot, query, where 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -244,7 +340,7 @@
     let periodList = [];
     let currentPeriodIndex = 1;
     let dateList = [];
-    let usersList = [];       // [ { staffId, name }, ... ]
+    let usersList = [];       // [ { staffId, name, role }, ... ]
     let allShiftsMap = {};    // { "date_staffId": { type, memo } }
 
     let selectedStaffId = "";
@@ -257,7 +353,7 @@
       if (user) {
         const loginPrefix = user.email ? user.email.replace("@shift.local", "") : "";
         
-        // 1. 管理者権限チェック（UID, prefix, staffIdのトリプル検索）
+        // 1. 管理者権限チェック
         const isAdmin = await verifyAdminRole(user.uid, loginPrefix);
         
         if (!isAdmin) {
@@ -276,22 +372,19 @@
       }
     });
 
-    // 柔軟な管理者権限検証関数
+    // 管理者権限検証関数
     async function verifyAdminRole(uid, loginPrefix) {
       try {
         let foundData = null;
 
-        // パターンA: docId = uid
         let uDoc = await getDoc(doc(db, "users", uid));
         if (uDoc.exists()) foundData = uDoc.data();
 
-        // パターンB: docId = loginPrefix
         if (!foundData && loginPrefix) {
           uDoc = await getDoc(doc(db, "users", loginPrefix));
           if (uDoc.exists()) foundData = uDoc.data();
         }
 
-        // パターンC: staffId == loginPrefix
         if (!foundData && loginPrefix) {
           const q = query(collection(db, "users"), where("staffId", "==", loginPrefix));
           const qSnap = await getDocs(q);
@@ -299,7 +392,6 @@
         }
 
         if (foundData) {
-          console.log("[admin.html 認証成功]", foundData);
           return String(foundData.role).trim().toLowerCase() === "admin";
         }
       } catch (e) {
@@ -316,22 +408,119 @@
       signOut(auth).then(() => { window.location.href = "index.html"; });
     });
 
+    // ── 職員管理ロジック ──
+
+    // フォーム開閉
+    document.getElementById("toggle-user-form-btn").addEventListener("click", () => {
+      const formContainer = document.getElementById("user-form-container");
+      formContainer.style.display = formContainer.style.display === "none" ? "block" : "none";
+    });
+
+    // 職員取得・描画
     async function loadUsers() {
       usersList = [];
+      const userListBody = document.getElementById("user-list-body");
+      userListBody.innerHTML = "";
+
       try {
         const snap = await getDocs(collection(db, "users"));
         snap.forEach(docSnap => {
           const d = docSnap.data();
           const sId = d.staffId || docSnap.id;
           const name = d.displayName || d.name || sId;
-          usersList.push({ staffId: sId, name: name });
+          const role = d.role || "staff";
+          usersList.push({ staffId: sId, name: name, role: role, docId: docSnap.id });
         });
+
         // staffId 順でソート
         usersList.sort((a, b) => a.staffId.localeCompare(b.staffId));
+
+        // 一覧テーブル描画
+        usersList.forEach(u => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><strong>${u.staffId}</strong></td>
+            <td>${u.name}</td>
+            <td><span style="font-size:11px; padding:2px 6px; border-radius:3px; background:${u.role === 'admin' ? '#d4edda; color:#155724' : '#e2e3e5; color:#383d41'}">${u.role}</span></td>
+            <td style="text-align:center;">
+              <button class="btn-sm-danger" data-id="${u.docId}" data-name="${u.name}">削除</button>
+            </td>
+          `;
+          userListBody.appendChild(tr);
+        });
+
+        // 削除ボタンのイベントリスナー
+        userListBody.querySelectorAll(".btn-sm-danger").forEach(btn => {
+          btn.addEventListener("click", async (e) => {
+            const docId = e.target.getAttribute("data-id");
+            const name = e.target.getAttribute("data-name");
+            if (confirm(`職員「${name}」を削除しますか？\n（注: 認証用のFirebase AuthアカウントはFirestore削除後に自動解除されません）`)) {
+              await deleteDoc(doc(db, "users", docId));
+              alert("削除しました。");
+              await loadUsers();
+              renderMatrixTable();
+            }
+          });
+        });
+
       } catch (e) {
         console.error("職員リストの取得失敗:", e);
+        userListBody.innerHTML = `<tr><td colspan="4" style="color:red;">データの取得に失敗しました</td></tr>`;
       }
     }
+
+    // 職員の新規追加処理
+    document.getElementById("add-user-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const staffId = document.getElementById("new-staff-id").value.trim();
+      const displayName = document.getElementById("new-display-name").value.trim();
+      const role = document.getElementById("new-role").value;
+      const password = document.getElementById("new-password").value;
+
+      if (!staffId || !displayName || !password) {
+        alert("すべての項目を入力してください。");
+        return;
+      }
+
+      const dummyEmail = `${staffId}@shift.local`;
+
+      try {
+        // 別アプリインスタンスを初期化して、管理者ログインセッションを維持したままアカウントを作成
+        const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        // Firebase Auth にユーザーを作成
+        const userCred = await createUserWithEmailAndPassword(secondaryAuth, dummyEmail, password);
+        const uid = userCred.user.uid;
+
+        // Firestore の users コレクションに保存 (ドキュメントID = staffId)
+        await setDoc(doc(db, "users", staffId), {
+          staffId: staffId,
+          displayName: displayName,
+          role: role,
+          uid: uid,
+          createdAt: new Date()
+        });
+
+        alert(`職員「${displayName}」の登録が完了しました！`);
+        document.getElementById("add-user-form").reset();
+        document.getElementById("new-password").value = "123456";
+
+        // 再読み込み
+        await loadUsers();
+        renderMatrixTable();
+
+      } catch (e) {
+        console.error("職員追加エラー:", e);
+        if (e.code === "auth/email-already-in-use") {
+          alert("エラー: 既に存在する職員IDです。");
+        } else {
+          alert("登録エラー: " + e.message);
+        }
+      }
+    });
+
+    // ── シフト希望マトリクス表示ロジック ──
 
     function generate4Periods() {
       const today = new Date();
@@ -419,9 +608,8 @@
 
       if (dateList.length === 0) return;
 
-      // --- 1. テーブルヘッダーの生成 ---
+      // ヘッダー作成
       const headerRow = document.createElement("tr");
-      
       const thStaff = document.createElement("th");
       thStaff.className = "staff-col";
       thStaff.textContent = "職員名";
@@ -440,7 +628,7 @@
       });
       thead.appendChild(headerRow);
 
-      // --- 2. テーブルボディ（職員ごとの行）の生成 ---
+      // 行（職員別）作成
       usersList.forEach(u => {
         const tr = document.createElement("tr");
 
@@ -466,7 +654,6 @@
             else td.classList.add("shift-work");
           }
 
-          // 管理者は常に全セルクリック・編集可能（締切後でも可能）
           td.addEventListener("click", () => {
             openAdminModal(u.staffId, u.name, dStr, shift);
           });
