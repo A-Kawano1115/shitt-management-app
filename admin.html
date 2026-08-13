@@ -287,7 +287,7 @@
 
         // パターンB: docId = loginPrefix
         if (!foundData && loginPrefix) {
-          uDoc = await getDoc(doc(doc(db, "users", loginPrefix)));
+          uDoc = await getDoc(doc(db, "users", loginPrefix));
           if (uDoc.exists()) foundData = uDoc.data();
         }
 
