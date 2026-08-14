@@ -548,11 +548,6 @@
         password = "123456";
       }
 
-      if (password.length < 6) {
-        alert("パスワードは6文字以上で指定してください。");
-        return;
-      }
-
       const dummyEmail = `${staffId}@shift.local`;
 
       try {
@@ -694,13 +689,11 @@
       });
       thead.appendChild(headerRow);
 
-      // usersList は既に「職種順 ➔ 職員ID順」に並び替え済みです
       usersList.forEach(u => {
         const tr = document.createElement("tr");
 
         const tdStaff = document.createElement("td");
         tdStaff.className = "staff-col";
-        // 表示名 (displayName) のみ表示
         tdStaff.textContent = u.displayName;
         tr.appendChild(tdStaff);
 
@@ -741,14 +734,12 @@
 
       const rows = [];
 
-      // ヘッダー行 ("職員ID", "職員氏名", "表示名", "職種", "YYYY-MM-DD", ...)
       const headerRow = ["職員ID", "職員氏名", "表示名", "職種"];
       dateList.forEach(dStr => {
         headerRow.push(dStr);
       });
       rows.push(headerRow);
 
-      // 各職員のデータ行作成 (並び順は職種➔職員ID順が維持されます)
       usersList.forEach(u => {
         const row = [u.staffId, u.fullName, u.displayName, u.jobTitle];
         dateList.forEach(dStr => {
