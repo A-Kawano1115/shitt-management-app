@@ -92,6 +92,18 @@
       border-color: #212529;
     }
 
+    .btn-success {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .btn-success:hover { background: #218838; }
+
     .table-container {
       overflow-x: auto;
       max-width: 100%;
@@ -252,7 +264,10 @@
 
   <!-- 2. 全体勤務希望一覧カード -->
   <div class="card">
-    <div class="card-title">📅 全職員の勤務希望一覧</div>
+    <div class="card-title">
+      <span>📅 全職員の勤務希望一覧</span>
+      <button id="btn-download-csv" class="btn-success">📥 CSVダウンロード</button>
+    </div>
     <div class="period-toolbar">
       <div id="period-tabs" class="period-tabs"></div>
       <div id="period-display" style="font-weight:bold; color:#212529;">対象期間: 取得中...</div>
@@ -485,15 +500,12 @@
       const dummyEmail = `${staffId}@shift.local`;
 
       try {
-        // 別アプリインスタンスを初期化して、管理者ログインセッションを維持したままアカウントを作成
         const secondaryApp = initializeApp(firebaseConfig, "Secondary");
         const secondaryAuth = getAuth(secondaryApp);
 
-        // Firebase Auth にユーザーを作成
         const userCred = await createUserWithEmailAndPassword(secondaryAuth, dummyEmail, password);
         const uid = userCred.user.uid;
 
-        // Firestore の users コレクションに保存 (ドキュメントID = staffId)
         await setDoc(doc(db, "users", staffId), {
           staffId: staffId,
           displayName: displayName,
@@ -506,7 +518,6 @@
         document.getElementById("add-user-form").reset();
         document.getElementById("new-password").value = "123456";
 
-        // 再読み込み
         await loadUsers();
         renderMatrixTable();
 
@@ -563,7 +574,6 @@
       renderPeriodTabs();
       switchPeriod(1);
 
-      // 希望データをリアルタイム監視
       onSnapshot(collection(db, "shifts"), (snapshot) => {
         allShiftsMap = {};
         snapshot.forEach(docSnap => {
@@ -608,7 +618,6 @@
 
       if (dateList.length === 0) return;
 
-      // ヘッダー作成
       const headerRow = document.createElement("tr");
       const thStaff = document.createElement("th");
       thStaff.className = "staff-col";
@@ -628,7 +637,6 @@
       });
       thead.appendChild(headerRow);
 
-      // 行（職員別）作成
       usersList.forEach(u => {
         const tr = document.createElement("tr");
 
@@ -664,6 +672,62 @@
         tbody.appendChild(tr);
       });
     }
+
+    // ── CSVダウンロード処理 ──
+    document.getElementById("btn-download-csv").addEventListener("click", () => {
+      if (usersList.length === 0 || dateList.length === 0) {
+        alert("出力可能なデータがありません。");
+        return;
+      }
+
+      const rows = [];
+
+      // ヘッダー行作成 ("職員ID", "職員名", "YYYY-MM-DD", ...)
+      const headerRow = ["職員ID", "職員名"];
+      dateList.forEach(dStr => {
+        headerRow.push(dStr);
+      });
+      rows.push(headerRow);
+
+      // 各職員のデータ行作成
+      usersList.forEach(u => {
+        const row = [u.staffId, u.name];
+        dateList.forEach(dStr => {
+          const key = `${dStr}_${u.staffId}`;
+          const shift = allShiftsMap[key];
+
+          if (shift) {
+            let val = shift.type || "";
+            if (shift.memo) {
+              val += `(${shift.memo})`;
+            }
+            row.push(val);
+          } else {
+            row.push(""); // 希望入力なし
+          }
+        });
+        rows.push(row);
+      });
+
+      // CSVテキスト生成（ダブルクォーテーションで囲む＆カンマ処理）
+      const csvContent = rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+
+      // UTF-8 BOM付き Blob の作成（Excelでの文字化け防止）
+      const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+      const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
+
+      // ダウンロードリンク作成＆実行
+      const currentPeriod = periodList[currentPeriodIndex];
+      const fileName = `勤務希望_${currentPeriod.startStr}_${currentPeriod.endStr}.csv`;
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    });
 
     function openAdminModal(staffId, staffName, dateStr, shift) {
       selectedStaffId = staffId;
