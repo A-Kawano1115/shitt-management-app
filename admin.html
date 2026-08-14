@@ -159,7 +159,7 @@
     /* 職員管理用スタイル */
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
       margin-bottom: 15px;
     }
@@ -231,6 +231,15 @@
             <input type="text" id="new-display-name" placeholder="例: 山田" required>
           </div>
           <div class="form-group">
+            <label for="new-job-title">職種 (必須)</label>
+            <select id="new-job-title" required>
+              <option value="薬剤師">薬剤師</option>
+              <option value="薬剤師（他）">薬剤師（他）</option>
+              <option value="事務">事務</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label for="new-role">権限</label>
             <select id="new-role">
               <option value="staff">一般職員 (staff)</option>
@@ -253,15 +262,16 @@
       <table style="text-align: left;">
         <thead>
           <tr>
-            <th style="width: 80px;">職員ID</th>
+            <th style="width: 70px;">職員ID</th>
             <th>氏名</th>
             <th>表示名</th>
-            <th style="width: 80px;">権限</th>
-            <th style="width: 60px; text-align: center;">操作</th>
+            <th style="width: 100px;">職種</th>
+            <th style="width: 70px;">権限</th>
+            <th style="width: 50px; text-align: center;">操作</th>
           </tr>
         </thead>
         <tbody id="user-list-body">
-          <tr><td colspan="5" style="text-align:center;">読み込み中...</td></tr>
+          <tr><td colspan="6" style="text-align:center;">読み込み中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -360,7 +370,7 @@
     let periodList = [];
     let currentPeriodIndex = 1;
     let dateList = [];
-    let usersList = [];       // [ { staffId, fullName, displayName, role }, ... ]
+    let usersList = [];       // [ { staffId, fullName, displayName, jobTitle, role }, ... ]
     let allShiftsMap = {};    // { "date_staffId": { type, memo } }
 
     let selectedStaffId = "";
@@ -368,6 +378,14 @@
 
     const DUTY_TYPES = ["当直〇", "当直×", "残業×"];
     const OFF_TYPES  = ["休み", "有給休暇", "リフレッシュ休暇", "半休（午前）", "半休（午後）"];
+
+    // 職種の並び順優先度テーブル
+    const JOB_ORDER = {
+      "薬剤師": 1,
+      "薬剤師（他）": 2,
+      "事務": 3,
+      "その他": 4
+    };
 
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -449,19 +467,30 @@
           const sId = d.staffId || docSnap.id;
           const fullName = d.fullName || d.name || sId;
           const displayName = d.displayName || fullName;
+          const jobTitle = d.jobTitle || d.profession || "その他";
           const role = d.role || "staff";
           
           usersList.push({ 
             staffId: sId, 
             fullName: fullName, 
             displayName: displayName, 
+            jobTitle: jobTitle,
             role: role, 
             docId: docSnap.id 
           });
         });
 
-        // staffId 順でソート
-        usersList.sort((a, b) => a.staffId.localeCompare(b.staffId));
+        // 職種順 -> 職員ID順でソート
+        usersList.sort((a, b) => {
+          const orderA = JOB_ORDER[a.jobTitle] || 99;
+          const orderB = JOB_ORDER[b.jobTitle] || 99;
+
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+          // 職種が同じ場合は staffId 順（昇順）
+          return a.staffId.localeCompare(b.staffId, undefined, { numeric: true });
+        });
 
         // 一覧テーブル描画
         usersList.forEach(u => {
@@ -470,7 +499,8 @@
             <td><strong>${u.staffId}</strong></td>
             <td>${u.fullName}</td>
             <td>${u.displayName}</td>
-            <td><span style="font-size:11px; padding:2px 6px; border-radius:3px; background:${u.role === 'admin' ? '#d4edda; color:#155724' : '#e2e3e5; color:#383d41'}">${u.role}</span></td>
+            <td><span style="font-size:11px; padding:2px 6px; border-radius:3px; background:#e9ecef;">${u.jobTitle}</span></td>
+            <td><span style="font-size:11px; padding:2px 6px; border-radius:3px; background:${u.role === 'admin' ? '#d4edda; color:#155724' : '#f8f9fa; color:#383d41'}">${u.role}</span></td>
             <td style="text-align:center;">
               <button class="btn-sm-danger" data-id="${u.docId}" data-name="${u.fullName}">削除</button>
             </td>
@@ -494,7 +524,7 @@
 
       } catch (e) {
         console.error("職員リストの取得失敗:", e);
-        userListBody.innerHTML = `<tr><td colspan="5" style="color:red;">データの取得に失敗しました</td></tr>`;
+        userListBody.innerHTML = `<tr><td colspan="6" style="color:red;">データの取得に失敗しました</td></tr>`;
       }
     }
 
@@ -504,6 +534,7 @@
       const staffId = document.getElementById("new-staff-id").value.trim();
       const fullName = document.getElementById("new-full-name").value.trim();
       const displayName = document.getElementById("new-display-name").value.trim();
+      const jobTitle = document.getElementById("new-job-title").value;
       const role = document.getElementById("new-role").value;
       let password = document.getElementById("new-password").value.trim();
 
@@ -512,7 +543,7 @@
         return;
       }
 
-      // パスワードが空欄の場合はデフォルト値（123456）を設定
+      // パスワード未入力時はデフォルト「123456」
       if (!password) {
         password = "123456";
       }
@@ -535,12 +566,13 @@
           staffId: staffId,
           fullName: fullName,
           displayName: displayName,
+          jobTitle: jobTitle,
           role: role,
           uid: uid,
           createdAt: new Date()
         });
 
-        alert(`職員「${displayName}」の登録が完了しました！\n(初期パスワード: ${password})`);
+        alert(`職員「${displayName}」（${jobTitle}）の登録が完了しました！\n(初期パスワード: ${password})`);
         document.getElementById("add-user-form").reset();
 
         await loadUsers();
@@ -662,12 +694,13 @@
       });
       thead.appendChild(headerRow);
 
+      // usersList は既に「職種順 ➔ 職員ID順」に並び替え済みです
       usersList.forEach(u => {
         const tr = document.createElement("tr");
 
         const tdStaff = document.createElement("td");
         tdStaff.className = "staff-col";
-        // 表示名 (displayName) をテーブルの縦列に表示
+        // 表示名 (displayName) のみ表示
         tdStaff.textContent = u.displayName;
         tr.appendChild(tdStaff);
 
@@ -708,16 +741,16 @@
 
       const rows = [];
 
-      // ヘッダー行作成 ("職員ID", "職員氏名", "表示名", "YYYY-MM-DD", ...)
-      const headerRow = ["職員ID", "職員氏名", "表示名"];
+      // ヘッダー行 ("職員ID", "職員氏名", "表示名", "職種", "YYYY-MM-DD", ...)
+      const headerRow = ["職員ID", "職員氏名", "表示名", "職種"];
       dateList.forEach(dStr => {
         headerRow.push(dStr);
       });
       rows.push(headerRow);
 
-      // 各職員のデータ行作成
+      // 各職員のデータ行作成 (並び順は職種➔職員ID順が維持されます)
       usersList.forEach(u => {
-        const row = [u.staffId, u.fullName, u.displayName];
+        const row = [u.staffId, u.fullName, u.displayName, u.jobTitle];
         dateList.forEach(dStr => {
           const key = `${dStr}_${u.staffId}`;
           const shift = allShiftsMap[key];
@@ -735,10 +768,8 @@
         rows.push(row);
       });
 
-      // CSVテキスト生成
       const csvContent = rows.map(r => r.map(field => `"${String(field).replace(/"/g, '""')}"`).join(",")).join("\r\n");
 
-      // UTF-8 BOM付き Blob の作成
       const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
       const blob = new Blob([bom, csvContent], { type: "text/csv;charset=utf-8;" });
 
