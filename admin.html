@@ -542,7 +542,8 @@
             const docId = e.target.getAttribute("data-id");
             const isVisible = e.target.value === "true";
             try {
-              await updateDoc(doc(doc(db, "users", docId)), { isVisible: isVisible });
+              // ◯ doc(...) を1つに修正
+              await updateDoc(doc(db, "users", docId), { isVisible: isVisible });
               await loadUsers();
               renderMatrixTable();
             } catch (err) {
